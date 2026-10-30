@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mi Tacógrafo Pro</title>
+<title>Mi Tacógrafo Pro 2.1</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#eef2f7;font-family:Arial;color:#172b4d}
@@ -12,40 +12,68 @@ header h1{margin:0;font-size:27px}
 header p{color:#cbd5e1}
 nav{background:#173b5e;padding:12px;text-align:center}
 nav button{margin:4px;padding:11px;border:0;border-radius:8px;background:#18a66a;color:white;font-weight:bold}
-main{max-width:700px;margin:auto;padding:15px}
+main{max-width:750px;margin:auto;padding:15px}
 .card{background:white;padding:20px;margin:15px 0;border-radius:14px;box-shadow:0 3px 12px #0001}
 h2{font-size:21px}
 input,select{width:100%;padding:12px;margin:7px 0 14px;border:1px solid #ccd5df;border-radius:8px;font-size:16px}
-.btn{background:#159b62;color:white;border:0;padding:13px;border-radius:8px;width:100%;font-size:16px;font-weight:bold}
+.btn{background:#159b62;color:white;border:0;padding:13px;border-radius:8px;width:100%;font-size:16px;font-weight:bold;margin-top:8px}
 .item{padding:12px;border-bottom:1px solid #ddd}
+.actions{display:flex;gap:8px;margin-top:8px}
+.actions button{padding:8px;border:0;border-radius:6px}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.day{padding:10px 2px;text-align:center;background:#eef2f7;border-radius:6px;font-size:13px}
+.worked{background:#18a66a;color:white}
 small{color:#64748b}
 footer{text-align:center;padding:25px;color:#64748b}
 </style>
 </head>
 <body>
+
 <header>
 <h1>🚛 Mi Tacógrafo Pro</h1>
 <p>Tu compañero de ruta en Europa 🇪🇺</p>
 </header>
+
 <nav>
 <button onclick="ver('jornada')">📅 Jornadas</button>
+<button onclick="ver('calendario')">🗓️ Calendario</button>
 <button onclick="ver('extra')">🔧 Extras</button>
 <button onclick="ver('resumen')">📊 Resumen</button>
 </nav>
+
 <main>
+
 <section class="card" id="jornada">
 <h2>📅 Registrar jornada</h2>
+
 <label>Fecha</label>
 <input type="date" id="fecha">
+
 <label>Hora de inicio</label>
 <input type="time" id="inicio">
+
 <label>Hora de finalización</label>
 <input type="time" id="fin">
+
 <label>Horas de descanso o pausa</label>
 <input type="number" id="pausa" min="0" step="0.25" value="0">
-<button class="btn" onclick="guardarJornada()">Guardar jornada</button>
+
+<label>Horas de conducción</label>
+<input type="number" id="conduccion" min="0" step="0.25" value="0">
+
+<button class="btn" id="btnGuardar" onclick="guardarJornada()">Guardar jornada</button>
+<button class="btn" id="btnCancelar" style="display:none;background:#64748b" onclick="cancelarEdicion()">Cancelar edición</button>
+
+<h2>Historial de jornadas</h2>
 <div id="listaJornadas"></div>
 </section>
+
+<section class="card" id="calendario" style="display:none">
+<h2>🗓️ Calendario mensual</h2>
+<input type="month" id="mes" onchange="mostrarCalendario()">
+<div class="calendar" id="cuadricula"></div>
+</section>
+
 <section class="card" id="extra" style="display:none">
 <h2>🔧 Trabajos extra</h2>
 <label>Descripción</label>
@@ -55,68 +83,340 @@ footer{text-align:center;padding:25px;color:#64748b}
 <button class="btn" onclick="guardarExtra()">Guardar trabajo extra</button>
 <div id="listaExtras"></div>
 </section>
+
 <section class="card" id="resumen" style="display:none">
 <h2>📊 Resumen general</h2>
 <p id="totalHoras"></p>
 <p id="totalExtras"></p>
-<button class="btn" onclick="exportar()">Exportar copia de seguridad</button>
+<p id="totalConduccion"></p>
+<p id="totalNocturnas"></p>
+<p id="totalExtraHoras"></p>
+<button class="btn" onclick="exportar()">💾 Exportar copia de seguridad</button>
+<label>Importar copia de seguridad</label>
+<input type="file" accept=".json,application/json" onchange="importar(event)">
 </section>
+
 </main>
-<footer>Mi Tacógrafo Pro · Versión 2.0</footer>
+
+<footer>Mi Tacógrafo Pro · Versión 2.1</footer>
+
 <script>
 const $=id=>document.getElementById(id);
-let jornadas=JSON.parse(localStorage.getItem('mtp_jornadas')||'[]');
-let extras=JSON.parse(localStorage.getItem('mtp_extras')||'[]');
-$('fecha').value=new Date().toLocaleDateString('en-CA');
+
+function leer(clave){
+try{
+const datos=JSON.parse(localStorage.getItem(clave)||'[]');
+return Array.isArray(datos)?datos:[];
+}catch(e){return []}
+}
+
+let jornadas=leer('mtp_jornadas');
+let extras=leer('mtp_extras');
+let editando=-1;
+
+function fechaLocal(){
+const d=new Date();
+return d.getFullYear()+'-'+
+String(d.getMonth()+1).padStart(2,'0')+'-'+
+String(d.getDate()).padStart(2,'0');
+}
+
+$('fecha').value=fechaLocal();
+$('mes').value=fechaLocal().slice(0,7);
+
+function guardarDatos(){
+localStorage.setItem('mtp_jornadas',JSON.stringify(jornadas));
+localStorage.setItem('mtp_extras',JSON.stringify(extras));
+}
+
 function ver(id){
-['jornada','extra','resumen'].forEach(x=>$(x).style.display=x===id?'block':'none');
+['jornada','calendario','extra','resumen'].forEach(
+x=>$(x).style.display=x===id?'block':'none'
+);
 actualizar();
 }
-function guardarJornada(){
-let fecha=$('fecha').value,inicio=$('inicio').value,fin=$('fin').value;
-let pausa=Number($('pausa').value);
-if(!fecha||!inicio||!fin||!Number.isFinite(pausa)||pausa<0){alert('Completa los datos correctamente');return}
-let a=inicio.split(':').map(Number),b=fin.split(':').map(Number);
-let minutos=(b[0]*60+b[1])-(a[0]*60+a[1]);
+
+function calcular(inicio,fin,pausa){
+let a=inicio.split(':').map(Number);
+let b=fin.split(':').map(Number);
+let minutos=b[0]*60+b[1]-a[0]*60-a[1];
 if(minutos<0)minutos+=1440;
-if(minutos===0){alert('Revisa las horas');return}
+if(minutos===0)return null;
 let horas=minutos/60-pausa;
-if(horas<0){alert('La pausa supera la jornada');return}
-jornadas.push({fecha,inicio,fin,pausa,horas});
-localStorage.setItem('mtp_jornadas',JSON.stringify(jornadas));
-actualizar();alert('Jornada guardada');
+return horas>=0?horas:null;
 }
+
+function guardarJornada(){
+let fecha=$('fecha').value;
+let inicio=$('inicio').value;
+let fin=$('fin').value;
+let pausa=Number($('pausa').value);
+let conduccion=Number($('conduccion').value);
+
+if(!fecha||!inicio||!fin||
+$('pausa').value===''||
+$('conduccion').value===''||
+!Number.isFinite(pausa)||pausa<0||
+!Number.isFinite(conduccion)||conduccion<0){
+alert('Completa los datos correctamente');
+return;
+}
+
+let horas=calcular(inicio,fin,pausa);
+
+if(horas===null||conduccion>horas){
+alert('Revisa las horas y los descansos');
+return;
+}
+
+let duplicado=jornadas.some((j,i)=>
+i!==editando&&j.fecha===fecha&&
+j.inicio===inicio&&j.fin===fin
+);
+
+if(duplicado){
+alert('Esta jornada ya está registrada');
+return;
+}
+
+let registro={fecha,inicio,fin,pausa,horas,conduccion};
+
+if(editando>=0){
+jornadas[editando]=registro;
+}else{
+jornadas.push(registro);
+}
+
+guardarDatos();
+cancelarEdicion();
+actualizar();
+alert('Jornada guardada correctamente');
+}
+
+function editarJornada(i){
+let j=jornadas[i];
+editando=i;
+$('fecha').value=j.fecha;
+$('inicio').value=j.inicio;
+$('fin').value=j.fin;
+$('pausa').value=j.pausa;
+$('conduccion').value=j.conduccion||0;
+$('btnGuardar').textContent='Guardar cambios';
+$('btnCancelar').style.display='block';
+ver('jornada');
+window.scrollTo(0,0);
+}
+
+function eliminarJornada(i){
+if(confirm('¿Eliminar esta jornada?')){
+jornadas.splice(i,1);
+guardarDatos();
+actualizar();
+}
+}
+
+function cancelarEdicion(){
+editando=-1;
+$('btnGuardar').textContent='Guardar jornada';
+$('btnCancelar').style.display='none';
+$('inicio').value='';
+$('fin').value='';
+$('pausa').value=0;
+$('conduccion').value=0;
+}
+
 function guardarExtra(){
-let descripcion=$('descripcion').value.trim(),importe=Number($('importe').value);
-if(!descripcion||!$('importe').value||!Number.isFinite(importe)||importe<0){alert('Introduce datos válidos');return}
-extras.push({descripcion,importe});
-localStorage.setItem('mtp_extras',JSON.stringify(extras));
-$('descripcion').value='';$('importe').value='';
-actualizar();alert('Trabajo extra guardado');
+let descripcion=$('descripcion').value.trim();
+let importe=Number($('importe').value);
+
+if(!descripcion||$('importe').value===''||
+!Number.isFinite(importe)||importe<0){
+alert('Introduce datos válidos');
+return;
 }
+
+extras.push({descripcion,importe});
+guardarDatos();
+$('descripcion').value='';
+$('importe').value='';
+actualizar();
+alert('Trabajo extra guardado');
+}
+
+function eliminarExtra(i){
+if(confirm('¿Eliminar este trabajo extra?')){
+extras.splice(i,1);
+guardarDatos();
+actualizar();
+}
+}
+
+function mostrarCalendario(){
+let mes=$('mes').value;
+if(!mes)return;
+
+let [anio,m]=mes.split('-').map(Number);
+let primero=new Date(anio,m-1,1);
+let dias=new Date(anio,m,0).getDate();
+let inicio=(primero.getDay()+6)%7;
+
+$('cuadricula').replaceChildren();
+
+['L','M','X','J','V','S','D'].forEach(x=>{
+let d=document.createElement('div');
+d.className='day';
+d.textContent=x;
+$('cuadricula').appendChild(d);
+});
+
+for(let i=0;i<inicio;i++){
+$('cuadricula').appendChild(document.createElement('div'));
+}
+
+for(let dia=1;dia<=dias;dia++){
+let fecha=mes+'-'+String(dia).padStart(2,'0');
+let registros=jornadas.filter(j=>j.fecha===fecha);
+let d=document.createElement('div');
+d.className='day'+(registros.length?' worked':'');
+d.textContent=dia;
+
+if(registros.length){
+d.title=registros.reduce((s,j)=>s+Number(j.horas||0),0).toFixed(2)+' horas';
+d.onclick=()=>ver('jornada');
+}
+
+$('cuadricula').appendChild(d);
+}
+}
+
+function minutosHora(h){
+let [a,b]=h.split(':').map(Number);
+return a*60+b;
+}
+
+function nocturnas(j){
+if(!j.inicio||!j.fin)return 0;
+
+let inicio=minutosHora(j.inicio);
+let fin=minutosHora(j.fin);
+
+if(fin<=inicio)fin+=1440;
+
+let total=0;
+
+for(let m=inicio;m<fin;m++){
+let hora=m%1440;
+if(hora>=1320||hora<360)total++;
+}
+
+return total/60;
+}
+
 function actualizar(){
 $('listaJornadas').replaceChildren();
-jornadas.forEach(j=>{
-let d=document.createElement('div');d.className='item';
-d.textContent=j.fecha+' · '+j.horas.toFixed(2)+' horas';
+
+jornadas.forEach((j,i)=>{
+let d=document.createElement('div');
+d.className='item';
+
+let texto=document.createElement('div');
+texto.textContent=j.fecha+' · '+
+Number(j.horas||0).toFixed(2)+' horas';
+
+let acciones=document.createElement('div');
+acciones.className='actions';
+
+let editar=document.createElement('button');
+editar.textContent='✏️ Editar';
+editar.onclick=()=>editarJornada(i);
+
+let borrar=document.createElement('button');
+borrar.textContent='🗑️ Eliminar';
+borrar.onclick=()=>eliminarJornada(i);
+
+acciones.append(editar,borrar);
+d.append(texto,acciones);
 $('listaJornadas').appendChild(d);
 });
+
 $('listaExtras').replaceChildren();
-extras.forEach(e=>{
-let d=document.createElement('div');d.className='item';
-d.textContent=e.descripcion+' · '+e.importe.toFixed(2)+' €';
+
+extras.forEach((e,i)=>{
+let d=document.createElement('div');
+d.className='item';
+let texto=document.createElement('span');
+texto.textContent=e.descripcion+' · '+
+Number(e.importe||0).toFixed(2)+' €';
+
+let borrar=document.createElement('button');
+borrar.textContent=' 🗑️';
+borrar.onclick=()=>eliminarExtra(i);
+
+d.append(texto,borrar);
 $('listaExtras').appendChild(d);
 });
-$('totalHoras').textContent='Horas registradas: '+jornadas.reduce((s,j)=>s+j.horas,0).toFixed(2);
-$('totalExtras').textContent='Trabajos extra: '+extras.reduce((s,e)=>s+e.importe,0).toFixed(2)+' €';
+
+let horas=jornadas.reduce((s,j)=>s+Number(j.horas||0),0);
+let dinero=extras.reduce((s,e)=>s+Number(e.importe||0),0);
+let conduccion=jornadas.reduce((s,j)=>s+Number(j.conduccion||0),0);
+let noche=jornadas.reduce((s,j)=>s+nocturnas(j),0);
+
+$('totalHoras').textContent='Horas registradas: '+horas.toFixed(2);
+$('totalExtras').textContent='Trabajos extra: '+dinero.toFixed(2)+' €';
+$('totalConduccion').textContent='Horas de conducción: '+conduccion.toFixed(2);
+$('totalNocturnas').textContent='Horas en horario nocturno (brutas): '+noche.toFixed(2);
+$('totalExtraHoras').textContent='Horas superiores a 8 por jornada (orientativo): '+
+jornadas.reduce((s,j)=>s+Math.max(0,Number(j.horas||0)-8),0).toFixed(2);
+
+mostrarCalendario();
 }
+
 function exportar(){
 let datos=JSON.stringify({jornadas,extras},null,2);
 let a=document.createElement('a');
-a.href=URL.createObjectURL(new Blob([datos],{type:'application/json'}));
-a.download='copia-tacografo.json';a.click();
-setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+let url=URL.createObjectURL(
+new Blob([datos],{type:'application/json'})
+);
+a.href=url;
+a.download='copia-tacografo-2-1.json';
+document.body.appendChild(a);
+a.click();
+a.remove();
+setTimeout(()=>URL.revokeObjectURL(url),10000);
 }
+
+function importar(event){
+let archivo=event.target.files[0];
+if(!archivo)return;
+
+let lector=new FileReader();
+
+lector.onload=()=>{
+try{
+let datos=JSON.parse(lector.result);
+
+if(!Array.isArray(datos.jornadas)||
+!Array.isArray(datos.extras)){
+throw Error('Formato incorrecto');
+}
+
+if(confirm('La importación sustituirá los registros actuales. ¿Continuar?')){
+jornadas=datos.jornadas;
+extras=datos.extras;
+guardarDatos();
+cancelarEdicion();
+actualizar();
+alert('Copia importada correctamente');
+}
+}catch(e){
+alert('El archivo no contiene una copia válida');
+}
+event.target.value='';
+};
+
+lector.readAsText(archivo);
+}
+
 actualizar();
 </script>
 </body>
