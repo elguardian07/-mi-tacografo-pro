@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mi Tacógrafo Pro 2.3</title>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#eef2f7;font:16px Arial;color:#172b4d}
+header{background:#102a43;color:white;padding:25px 15px;text-align:center}
+header p{color:#cbd5e1}
+nav{background:#173b5e;text-align:center;padding:12px}
+nav button,.smallbtn{margin:4px;padding:10px;border:0;border-radius:8px;background:#18a66a;color:white;font-weight:bold;cursor:pointer}
+main{max-width:750px;margin:auto;padding:15px}
+.card{background:white;padding:20px;margin:15px 0;border-radius:14px;box-shadow:0 3px 12px #0001}
+input,select{width:100%;padding:12px;margin:7px 0 14px;border:1px solid #ccd5df;border-radius:8px;font-size:16px}
+.btn{background:#159b62;color:white;border:0;padding:13px;border-radius:8px;width:100%;font-size:16px;font-weight:bold;margin:7px 0;cursor:pointer}
+.secondary{background:#64748b}
+.danger{background:#b91c1c}
+.item{padding:12px 0;border-bottom:1px solid #ddd}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.actions button{border:0;border-radius:6px;padding:9px;cursor:pointer}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.day{padding:10px 2px;text-align:center;background:#eef2f7;border-radius:6px;font-size:13px}
+.worked{background:#18a66a;color:white}
+.muted{color:#64748b;font-size:14px}
+footer{text-align:center;padding:25px;color:#64748b}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>🚛 Mi Tacógrafo Pro</h1>
+<p>Tu compañero de ruta en Europa 🇪🇺</p>
+</header>
+
+<nav>
+<button onclick="ver('jornada')">📅 Jornadas</button>
+<button onclick="ver('automatico')">⏱️ Automático</button>
+<button onclick="ver('kilometros')">🚛 Camiones y km</button>
+<button onclick="ver('calendario')">🗓️ Calendario</button>
+<button onclick="ver('extra')">🔧 Extras</button>
+<button onclick="ver('resumen')">📊 Resumen</button>
+</nav>
+
+<main>
+
+<section class="card" id="jornada">
+<h2>📅 Registrar jornada manual</h2>
+
+<label>Fecha</label>
+<input type="date" id="fecha">
+
+<label>Camión (opcional)</label>
+<select id="camionJornada"></select>
+
+<label>Hora de inicio</label>
+<input type="time" id="inicio">
+
+<label>Hora de finalización</label>
+<input type="time" id="fin">
+
+<label>Horas de descanso o pausa</label>
+<input type="number" id="pausa" min="0" step="0.25" value="0">
+
+<label>Horas de conducción</label>
+<input type="number" id="conduccion" min="0" step="0.25" value="0">
+
+<button class="btn" id="btnGuardar" onclick="guardarJornada()">Guardar jornada</button>
+<button class="btn secondary" id="btnCancelar" style="display:none" onclick="cancelarEdicion()">Cancelar edición</button>
+
+<h2>Historial de jornadas</h2>
+<div id="listaJornadas"></div>
+</section>
+
+<section class="card" id="automatico" style="display:none">
+
+<h2>⏱️ Registro automático asistido</h2>
+
+<label>Camión utilizado</label>
+<select id="camionAuto"></select>
+
+<p class="muted">
+Selecciona una actividad al comenzar y cámbiala cuando termines.
+El sistema registra los tiempos a partir de tus pulsaciones.
+</p>
+
+<p id="estadoAuto"></p>
+<p id="relojAuto" style="font-size:28px;font-weight:bold">00:00:00</p>
+
+<button class="btn" onclick="cambiarActividad('conduccion')">🚛 Iniciar conducción</button>
+<button class="btn" onclick="cambiarActividad('otros')">🔧 Otros trabajos</button>
+<button class="btn" onclick="cambiarActividad('pausa')">☕ Pausa / descanso</button>
+<button class="btn secondary" onclick="finalizarAuto()">🏁 Finalizar y guardar jornada</button>
+
+<p id="alertaAuto" class="muted"></p>
+
+<p class="muted">
+Los avisos son orientativos. Esta aplicación no sustituye al tacógrafo homologado.
+</p>
+
+</section>
+
+<section class="card" id="kilometros" style="display:none">
+
+<h2>🚛 Mis camiones</h2>
+
+<label>Matrícula del vehículo</label>
+<input id="matricula" placeholder="Ej.: 1234 ABC" maxlength="24">
+
+<label>Nombre o descripción</label>
+<input id="nombreCamion" placeholder="Ej.: Camión principal">
+
+<button class="btn" onclick="agregarCamion()">➕ Añadir camión</button>
+
+<div id="listaCamiones"></div>
+
+<h2>🛣️ Registrar kilómetros diarios</h2>
+
+<label>Camión</label>
+<select id="camionKm"></select>
+
+<label>Fecha</label>
+<input type="date" id="fechaKm">
+
+<label>Odómetro inicial (km)</label>
+<input type="number" id="kmInicial" min="0" step="1">
+
+<label>Odómetro final (km)</label>
+<input type="number" id="kmFinal" min="0" step="1">
+
+<button class="btn" id="btnKm" onclick="guardarKm()">Guardar kilómetros</button>
+<button class="btn secondary" id="cancelarKm" style="display:none" onclick="limpiarKm()">Cancelar edición</button>
+
+<h2>📆 Resumen mensual por camión</h2>
+
+<label>Mes</label>
+<input type="month" id="mesKm" onchange="actualizarKm()">
+
+<label>Camión</label>
+<select id="camionMes" onchange="actualizarKm()"></select>
+
+<div id="resumenKm"></div>
+
+<p class="muted">
+El total mensual suma los kilómetros registrados cada día.
+La diferencia entre las lecturas inicial y final puede incluir kilómetros no registrados.
+</p>
+
+<h2>📋 Historial de kilómetros</h2>
+<div id="listaKm"></div>
+
+</section>
+
+<section class="card" id="calendario" style="display:none">
+
+<h2>🗓️ Calendario mensual</h2>
+<input type="month" id="mes" onchange="mostrarCalendario()">
+<div class="calendar" id="cuadricula"></div>
+
+</section>
+
+<section class="card" id="extra" style="display:none">
+
+<h2>🔧 Trabajos extra</h2>
+
+<label>Descripción</label>
+<input id="descripcion" placeholder="Ejemplo: descarga adicional">
+
+<label>Importe (€)</label>
+<input type="number" id="importe" min="0" step="0.01">
+
+<button class="btn" onclick="guardarExtra()">Guardar trabajo extra</button>
+
+<div id="listaExtras"></div>
+
+</section>
+
+<section class="card" id="resumen" style="display:none">
+
+<h2>📊 Resumen general</h2>
+
+<p id="totalKm"></p>
+<p id="totalHoras"></p>
+<p id="totalExtras"></p>
+<p id="totalConduccion"></p>
+<p id="totalNocturnas"></p>
+<p id="totalExtraHoras"></p>
+
+<button class="btn" onclick="exportar()">💾 Exportar copia de seguridad</button>
+
+<label>Importar copia de seguridad</label>
+<input type="file" accept=".json,application/json" onchange="importar(event)">
+
+<p class="muted">
+Los datos se guardan en este navegador.
+Exporta copias de seguridad con frecuencia.
+</p>
+
+</section>
+
+</main>
+
+<footer>Mi Tacógrafo Pro · Versión 2.3</footer>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+
+const keyJ = 'mtp_jornadas';
+const keyE = 'mtp_extras';
+const keyC = 'mtp_camiones';
+const keyK = 'mtp_kilometros';
+const keyA = 'mtp_auto';
+
+function leer(clave, defecto) {
+  try {
+    const valor = JSON.parse(localStorage.getItem(clave));
+    return valor === null ? defecto : valor;
+  } catch (e) {
+    return defecto;
+  }
+}
+
+let jornadas = leer(keyJ, []);
+let extras = leer(keyE, []);
+let camiones = leer(keyC, []);
+let kilometros = leer(keyK, []);
+let auto = leer(keyA, null);
+
+if (!Array.isArray(jornadas)) jornadas = [];
+if (!Array.isArray(extras)) extras = [];
+if (!Array.isArray(camiones)) camiones = [];
+if (!Array.isArray(kilometros)) kilometros = [];
+
+let editando = -1;
+let editandoKm = -1;
+
+function fechaLocal(d = new Date()) {
+  return d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
+}
+
+$('fecha').value = fechaLocal();
+$('fechaKm').value = fechaLocal();
+$('mes').value = fechaLocal().slice(0, 7);
+$('mesKm').value = fechaLocal().slice(0, 7);
+
+function guardarDatos() {
+  localStorage.setItem(keyJ, JSON.stringify(jornadas));
+  localStorage.setItem(keyE, JSON.stringify(extras));
+  localStorage.setItem(keyC, JSON.stringify(camiones));
+  localStorage.setItem(keyK, JSON.stringify(kilometros));
+}
+
+function ver(id) {
+  const secciones = [
+    'jornada',
+    'automatico',
+    'kilometros',
+    'calendario',
+    'extra',
+    'resumen'
+  ];
+
+  secciones.forEach(x => {
+    $(x).style.display = x === id ? 'block' : 'none';
+  });
+
+  actualizar();
+  window.scrollTo(0, 0);
+}
+
+function calcular(inicio, fin, pausa) {
+  const a = inicio.split(':').map(Number);
+  const b = fin.split(':').map(Number);
+
+  let minutos = b[0] * 60 + b[1] - a[0] * 60 - a[1];
+
+  if (minutos < 0) minutos += 1440;
+  if (minutos === 0) return null;
+
+  const horas = minutos / 60 - pausa;
+  return horas >= 0 ? horas : null;
+}
+
+function guardarJornada() {
+  const fecha = $('fecha').value;
+  const inicio = $('inicio').value;
+  const fin = $('fin').value;
+  const pausa = Number($('pausa').value);
+  const conduccion = Number($('conduccion').value);
+
+  if (
+    !fecha || !inicio || !fin ||
+    $('pausa').value === '' ||
+    $('conduccion').value === '' ||
+    !Number.isFinite(pausa) || pausa < 0 ||
+    !Number.isFinite(conduccion) || conduccion < 0
+  ) {
+    alert('Completa los datos correctamente');
+    return;
+  }
+
+  const horas = calcular(inicio, fin, pausa);
+
+  if (horas === null || conduccion > horas) {
+    alert('Revisa las horas y los descansos');
+    return;
+  }
+
+  const duplicado = jornadas.some((j, i) =>
+    i !== editando &&
+    j.fecha === fecha &&
+    j.inicio === inicio &&
+    j.fin === fin
+  );
+
+  if (duplicado) {
+    alert('Esta jornada ya está registrada');
+    return;
+  }
+
+  const anterior = editando >= 0 ? jornadas[editando] : {};
+
+  const registro = {
+    ...anterior,
+    fecha,
+    inicio,
+    fin,
+    pausa,
+    horas,
+    conduccion,
+    camionId: $('camionJornada').value || null
+  };
+
+  if (editando >= 0) {
+    jornadas[editando] = registro;
+  } else {
+    jornadas.push(registro);
+  }
+
+  guardarDatos();
+  cancelarEdicion();
+  actualizar();
+
+  alert('Jornada guardada correctamente');
+}
+
+function editarJornada(i) {
+  const j = jornadas[i];
+  if (!j) return;
+
+  editando = i;
+
+  $('fecha').value = j.fecha;
+  $('inicio').value = j.inicio;
+  $('fin').value = j.fin;
+  $('pausa').value = j.pausa || 0;
+  $('conduccion').value = j.conduccion || 0;
+  $('camionJornada').value = j.camionId || '';
+
+  $('btnGuardar').textContent = 'Guardar cambios';
+  $('btnCancelar').style.display = 'block';
+
+  ver('jornada');
+}
+
+function cancelarEdicion() {
+  editando = -1;
+
+  $('btnGuardar').textContent = 'Guardar jornada';
+  $('btnCancelar').style.display = 'none';
+
+  $('inicio').value = '';
+  $('fin').value = '';
+  $('pausa').value = 0;
+  $('conduccion').value = 0;
+  $('camionJornada').value = '';
+}
+
+function eliminarJornada(i) {
+  if (confirm('¿Eliminar esta jornada?')) {
+    jornadas.splice(i, 1);
+    guardarDatos();
+    actualizar();
+  }
+}
+
+function guardarExtra() {
+  const descripcion = $('descripcion').value.trim();
+  const importe = Number($('importe').value);
+
+  if (
+    !descripcion ||
+    $('importe').value === '' ||
+    !Number.isFinite(importe) ||
+    importe < 0
+  ) {
+    alert('Introduce datos válidos');
+    return;
+  }
+
+  extras.push({ descripcion, importe });
+
+  guardarDatos();
+
+  $('descripcion').value = '';
+  $('importe').value = '';
+
+  actualizar();
+  alert('Trabajo extra guardado');
+}
+
+function eliminarExtra(i) {
+  if (confirm('¿Eliminar este trabajo extra?')) {
+    extras.splice(i, 1);
+    guardarDatos();
+    actualizar();
+  }
+}
+
+function boton(texto, funcion) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.textContent = texto;
+  b.onclick = funcion;
+  return b;
+}
+
+function mostrarCalendario() {
+  const mes = $('mes').value;
+  if (!mes) return;
+
+  const [anio, m] = mes.split('-').map(Number);
+  const dias = new Date(anio, m, 0).getDate();
+  const inicio = (new Date(anio, m - 1, 1).getDay() + 6) % 7;
+
+  const grid = $('cuadricula');
+  grid.replaceChildren();
+
+  ['L', 'M', 'X', 'J', 'V', 'S', 'D'].forEach(x => {
+    const d = document.createElement('div');
+    d.className = 'day';
+    d.textContent = x;
+    grid.appendChild(d);
+  });
+
+  for (let i = 0; i < inicio; i++) {
+    grid.appendChild(document.createElement('div'));
+  }
+
+  for (let dia = 1; dia <= dias; dia++) {
+    const fecha = mes + '-' + String(dia).padStart(2, '0');
+    const registros = jornadas.filter(j => j.fecha === fecha);
+
+    const d = document.createElement('div');
+    d.className = 'day' + (registros.length ? ' worked' : '');
+    d.textContent = dia;
+
+    if (registros.length) {
+      d.title = registros.reduce(
+        (s, j) => s + Number(j.horas || 0), 0
+      ).toFixed(2) + ' horas';
+
+      d.onclick = () => ver('jornada');
+    }
+
+    grid.appendChild(d);
+  }
+}
+
+function nocturnas(j) {
+  if (!j.inicio || !j.fin) return 0;
+
+  function minutos(h) {
+    const [a, b] = h.split(':').map(Number);
+    return a * 60 + b;
+  }
+
+  let ini = minutos(j.inicio);
+  let fin = minutos(j.fin);
+
+  if (fin <= ini) fin += 1440;
+
+  let total = 0;
+
+  for (let m = ini; m < fin; m++) {
+    const hora = m % 1440;
+
+    if (hora >= 1320 || hora < 360) {
+      total++;
+    }
+  }
+
+  return total / 60;
+}
+
+function nombreVehiculo(id) {
+  const c = camiones.find(x => x.id === id);
+
+  if (!c) return 'Vehículo no disponible';
+
+  return c.matricula + (c.nombre ? ' · ' + c.nombre : '');
+}
+
+function opcionesVehiculos(id, permitirVacio) {
+  const elemento = $(id);
+  const actual = elemento.value;
+
+  elemento.replaceChildren();
+
+  if (permitirVacio) {
+    const opcion = document.createElement('option');
+    opcion.value = '';
+    opcion.textContent = 'Sin seleccionar';
+    elemento.appendChild(opcion);
+  }
+
+  camiones.forEach(c => {
+    const opcion = document.createElement('option');
+    opcion.value = c.id;
+    opcion.textContent = nombreVehiculo(c.id);
+    elemento.appendChild(opcion);
+  });
+
+  if ([...elemento.options].some(o => o.value === actual)) {
+    elemento.value = actual;
+  }
+}
+
+function agregarCamion() {
+  const matricula = $('matricula').value
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, ' ');
+
+  const nombre = $('nombreCamion').value.trim();
+
+  if (!matricula) {
+    alert('Introduce la matrícula');
+    return;
+  }
+
+  if (camiones.some(c => c.matricula === matricula)) {
+    alert('Esta matrícula ya está registrada');
+    return;
+  }
+
+  camiones.push({
+    id: 'c' + Date.now() + '_' +
+      Math.random().toString(36).slice(2, 7),
+    matricula,
+    nombre
+  });
+
+  guardarDatos();
+
+  $('matricula').value = '';
+  $('nombreCamion').value = '';
+
+  actualizar();
+}
+
+function eliminarCamion(id) {
+  const tieneKm = kilometros.some(k => k.camionId === id);
+  const tieneJornadas = jornadas.some(j => j.camionId === id);
+
+  if (tieneKm || tieneJornadas) {
+    alert(
+      'Este camión tiene registros asociados. ' +
+      'Elimina o reasigna primero sus registros.'
+    );
+    return;
+  }
+
+  if (confirm('¿Eliminar este camión?')) {
+    camiones = camiones.filter(c => c.id !== id);
+    guardarDatos();
+    actualizar();
+  }
+}
+
+function guardarKm() {
+  const camionId = $('camionKm').value;
+  const fecha = $('fechaKm').value;
+
+  const a = $('kmInicial').value;
+  const b = $('kmFinal').value;
+
+  const inicial = Number(a);
+  const final = Number(b);
+
+  if (
+    !camionId ||
+    !camiones.some(c => c.id === camionId) ||
+    !fecha ||
+    a === '' ||
+    b === '' ||
+    !Number.isSafeInteger(inicial) ||
+    !Number.isSafeInteger(final) ||
+    inicial < 0 ||
+    final < inicial
+  ) {
+    alert(
+      'Comprueba el camión, la fecha y los kilómetros. ' +
+      'El final debe ser igual o superior al inicial.'
+    );
+    return;
+  }
+
+  const duplicado = kilometros.some((k, i) =>
+    i !== editandoKm &&
+    k.camionId === camionId &&
+    k.fecha === fecha
+  );
+
+  if (duplicado) {
+    alert(
+      'Ya existe un registro para este camión y esta fecha. ' +
+      'Puedes editarlo.'
+    );
+    return;
+  }
+
+  const registro = {
+    camionId,
+    fecha,
+    inicial,
+    final
+  };
+
+  if (editandoKm >= 0) {
+    kilometros[editandoKm] = registro;
+  } else {
+    kilometros.push(registro);
+  }
+
+  guardarDatos();
+  limpiarKm();
+  actualizar();
+
+  alert('Kilómetros guardados');
+}
+
+function editarKm(i) {
+  const k = kilometros[i];
+  if (!k) return;
+
+  editandoKm = i;
+
+  $('camionKm').value = k.camionId;
+  $('fechaKm').value = k.fecha;
+  $('kmInicial').value = k.inicial;
+  $('kmFinal').value = k.final;
+
+  $('btnKm').textContent = 'Guardar cambios';
+  $('cancelarKm').style.display = 'block';
+
+  ver('kilometros');
+}
+
+function limpiarKm() {
+  editandoKm = -1;
+
+  $('btnKm').textContent = 'Guardar kilómetros';
+  $('cancelarKm').style.display = 'none';
+
+  $('fechaKm').value = fechaLocal();
+  $('kmInicial').value = '';
+  $('kmFinal').value = '';
+}
+
+function eliminarKm(i) {
+  if (confirm('¿Eliminar este registro de kilómetros?')) {
+    kilometros.splice(i, 1);
+
+    if (editandoKm === i) limpiarKm();
+
+    guardarDatos();
+    actualizar();
+  }
+}
+
+function actualizarKm() {
+  ['camionKm', 'camionMes', 'camionJornada', 'camionAuto']
+    .forEach(id => {
+      opcionesVehiculos(
+        id,
+        id === 'camionJornada' || id === 'camionAuto'
+      );
+    });
+
+  const lc = $('listaCamiones');
+  lc.replaceChildren();
+
+  camiones.forEach(c => {
+    const d = document.createElement('div');
+    d.className = 'item';
+
+    d.append(
+      document.createTextNode(nombreVehiculo(c.id) + ' '),
+      boton('🗑️ Eliminar', () => eliminarCamion(c.id))
+    );
+
+    lc.appendChild(d);
+  });
+
+  const lk = $('listaKm');
+  lk.replaceChildren();
+
+  kilometros
+    .map((k, i) => ({ ...k, i }))
+    .sort((a, b) => b.fecha.localeCompare(a.fecha))
+    .forEach(k => {
+      const d = document.createElement('div');
+      d.className = 'item';
+
+      d.appendChild(document.createTextNode(
+        k.fecha + ' · ' +
+        nombreVehiculo(k.camionId) + ' · ' +
+        k.inicial + ' → ' + k.final + ' km · ' +
+        (k.final - k.inicial) + ' km'
+      ));
+
+      const acciones = document.createElement('div');
+      acciones.className = 'actions';
+
+      acciones.append(
+        boton('✏️ Editar', () => editarKm(k.i)),
+        boton('🗑️ Eliminar', () => eliminarKm(k.i))
+      );
+
+      d.appendChild(acciones);
+      lk.appendChild(d);
+    });
+
+  const mes = $('mesKm').value;
+  const id = $('camionMes').value;
+
+  const registros = kilometros
+    .filter(k => k.camionId === id && k.fecha.startsWith(mes))
+    .sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+  const total = registros.reduce(
+    (s, k) => s + k.final - k.inicial, 0
+  );
+
+  const resumen = $('resumenKm');
+  resumen.replaceChildren();
+
+  const p = document.createElement('p');
+
+  if (registros.length) {
+    p.textContent =
+      '📅 ' + registros.length + ' días registrados · ' +
+      total.toLocaleString('es-ES') + ' km acumulados. ' +
+      'Odómetro inicial: ' +
+      registros[0].inicial.toLocaleString('es-ES') + ' km. ' +
+      'Odómetro final: ' +
+      registros[registros.length - 1].final.toLocaleString('es-ES') +
+      ' km.';
+  } else {
+    p.textContent = 'Sin registros para este camión y mes.';
+  }
+
+  resumen.appendChild(p);
+
+  const kmTotales = kilometros.reduce(
+    (s, k) => s + k.final - k.inicial, 0
+  );
+
+  $('totalKm').textContent =
+    'Kilómetros registrados (todos los vehículos): ' +
+    kmTotales.toLocaleString('es-ES') + ' km';
+}
+
+function guardarAuto() {
+  if (auto) {
+    localStorage.setItem(keyA, JSON.stringify(auto));
+  } else {
+    localStorage.removeItem(keyA);
+  }
+}
+
+function cambiarActividad(tipo) {
+  const ahora = Date.now();
+
+  if (!auto) {
+    auto = {
+      inicio: ahora,
+      actividad: tipo,
+      desde: ahora,
+      segmentos: [],
+      camionId: $('camionAuto').value || null
+    };
+  } else {
+    if (auto.actividad === tipo) {
+      alert('Esa actividad ya está activa');
+      return;
+    }
+
+    auto.segmentos.push({
+      tipo: auto.actividad,
+      inicio: auto.desde,
+      fin: ahora
+    });
+
+    auto.actividad = tipo;
+    auto.desde = ahora;
+  }
+
+  guardarAuto();
+  actualizarAuto();
+}
+
+function segmentosActuales() {
+  if (!auto) return [];
+
+  return [
+    ...auto.segmentos,
+    {
+      tipo: auto.actividad,
+      inicio: auto.desde,
+      fin: Date.now()
+    }
+  ];
+}
+
+function tiempo(segmentos, tipo) {
+  return segmentos
+    .filter(x => x.tipo === tipo)
+    .reduce((s, x) => s + (x.fin - x.inicio), 0) / 3600000;
+}
+
+function reloj(ms) {
+  const segundos = Math.floor(ms / 1000);
+
+  return [
+    Math.floor(segundos / 3600),
+    Math.floor((segundos % 3600) / 60),
+    segundos % 60
+  ]
+    .map(x => String(x).padStart(2, '0'))
+    .join(':');
+}
+
+function actualizarAuto() {
+  if (!auto) {
+    $('estadoAuto').textContent = 'Sin jornada automática activa';
+    $('relojAuto').textContent = '00:00:00';
+    $('alertaAuto').textContent = '';
+    return;
+  }
+
+  const segmentos = segmentosActuales();
+  const duracion = Date.now() - auto.desde;
+  const conduccion = tiempo(segmentos, 'conduccion');
+
+  const nombres = {
+    conduccion: '🚛 Conducción',
+    otros: '🔧 Otros trabajos',
+    pausa: '☕ Pausa / descanso'
+  };
+
+  $('estadoAuto').textContent =
+    'Actividad actual: ' + nombres[auto.actividad];
+
+  $('relojAuto').textContent = reloj(duracion);
+
+  const avisos = [];
+
+  if (
+    auto.actividad === 'conduccion' &&
+    duracion >= 4.5 * 3600000
+  ) {
+    avisos.push(
+      '⚠️ Has alcanzado 4 h 30 min en esta actividad de conducción. ' +
+      'Comprueba las pausas reglamentarias.'
+    );
+  }
+
+  if (conduccion > 9) {
+    avisos.push(
+      '⚠️ Más de 9 horas de conducción registradas. ' +
+      'Comprueba si corresponde una ampliación legal.'
+    );
+  }
+
+  $('alertaAuto').textContent = avisos.join(' ');
+}
+
+function finalizarAuto() {
+  if (!auto) {
+    alert('No hay jornada automática activa');
+    return;
+  }
+
+  const ahora = Date.now();
+  const segmentos = segmentosActuales();
+
+  const total = (ahora - auto.inicio) / 3600000;
+  const pausa = tiempo(segmentos, 'pausa');
+  const conduccion = tiempo(segmentos, 'conduccion');
+  const horas = total - pausa;
+
+  if (ahora - auto.inicio >= 24 * 3600000) {
+    alert(
+      'La sesión supera 24 horas. ' +
+      'Revisa el registro antes de guardarlo.'
+    );
+    return;
+  }
+
+  if (!confirm('¿Finalizar y guardar la jornada automática?')) {
+    return;
+  }
+
+  const ini = new Date(auto.inicio);
+  const fin = new Date(ahora);
+
+  function hh(d) {
+    return String(d.getHours()).padStart(2, '0') +
+      ':' +
+      String(d.getMinutes()).padStart(2, '0');
+  }
+
+  jornadas.push({
+    fecha: fechaLocal(ini),
+    inicio: hh(ini),
+    fin: hh(fin),
+    pausa: Number(pausa.toFixed(4)),
+    conduccion: Number(conduccion.toFixed(4)),
+    horas: Number(horas.toFixed(4)),
+    camionId: auto.camionId || null,
+    modo: 'automatico',
+    segmentos
+  });
+
+  auto = null;
+
+  guardarAuto();
+  guardarDatos();
+  actualizar();
+
+  ver('jornada');
+
+  alert('Jornada automática guardada');
+}
+
+function actualizar() {
+  const lista = $('listaJornadas');
+  lista.replaceChildren();
+
+  jornadas.forEach((j, i) => {
+    const d = document.createElement('div');
+    const texto = document.createElement('div');
+    const acciones = document.createElement('div');
+
+    d.className = 'item';
+    acciones.className = 'actions';
+
+    texto.textContent =
+      j.fecha + ' · ' +
+      Number(j.horas || 0).toFixed(2) +
+      ' horas' +
+      (j.modo === 'automatico' ? ' · ⏱️' : '');
+
+    acciones.append(
+      boton('✏️ Editar', () => editarJornada(i)),
+      boton('🗑️ Eliminar', () => eliminarJornada(i))
+    );
+
+    d.append(texto, acciones);
+    lista.appendChild(d);
+  });
+
+  const listaExtras = $('listaExtras');
+  listaExtras.replaceChildren();
+
+  extras.forEach((e, i) => {
+    const d = document.createElement('div');
+    d.className = 'item';
+
+    d.append(
+      document.createTextNode(
+        e.descripcion + ' · ' +
+        Number(e.importe || 0).toFixed(2) + ' € '
+      ),
+      boton('🗑️', () => eliminarExtra(i))
+    );
+
+    listaExtras.appendChild(d);
+  });
+
+  function suma(campo) {
+    return jornadas.reduce(
+      (s, j) => s + Number(j[campo] || 0), 0
+    );
+  }
+
+  $('totalHoras').textContent =
+    'Horas registradas: ' + suma('horas').toFixed(2);
+
+  $('totalExtras').textContent =
+    'Trabajos extra: ' +
+    extras.reduce(
+      (s, e) => s + Number(e.importe || 0), 0
+    ).toFixed(2) + ' €';
+
+  $('totalConduccion').textContent =
+    'Horas de conducción: ' + suma('conduccion').toFixed(2);
+
+  $('totalNocturnas').textContent =
+    'Horas en horario nocturno (brutas): ' +
+    jornadas.reduce(
+      (s, j) => s + nocturnas(j), 0
+    ).toFixed(2);
+
+  $('totalExtraHoras').textContent =
+    'Horas superiores a 8 por jornada (orientativo): ' +
+    jornadas.reduce(
+      (s, j) => s + Math.max(0, Number(j.horas || 0) - 8), 0
+    ).toFixed(2);
+
+  mostrarCalendario();
+  actualizarAuto();
+  actualizarKm();
+}
+
+function exportar() {
+  const datos = JSON.stringify({
+    jornadas,
+    extras,
+    camiones,
+    kilometros,
+    auto
+  }, null, 2);
+
+  const blob = new Blob(
+    [datos],
+    { type: 'application/json' }
+  );
+
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'copia-tacografo-2-3.json';
+
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+function importar(event) {
+  const archivo = event.target.files[0];
+  if (!archivo) return;
+
+  const lector = new FileReader();
+
+  lector.onload = () => {
+    try {
+      const datos = JSON.parse(lector.result);
+
+      if (
+        !Array.isArray(datos.jornadas) ||
+        !Array.isArray(datos.extras)
+      ) {
+        throw new Error('Formato incorrecto');
+      }
+
+      if (confirm(
+        'La importación sustituirá los registros actuales. ¿Continuar?'
+      )) {
+        jornadas = datos.jornadas;
+        extras = datos.extras;
+
+        camiones = Array.isArray(datos.camiones)
+          ? datos.camiones
+          : [];
+
+        kilometros = Array.isArray(datos.kilometros)
+          ? datos.kilometros
+          : [];
+
+        auto = datos.auto && typeof datos.auto === 'object'
+          ? datos.auto
+          : null;
+
+        guardarDatos();
+        guardarAuto();
+        cancelarEdicion();
+        actualizar();
+
+        alert('Copia importada correctamente');
+      }
+    } catch (e) {
+      alert('El archivo no contiene una copia válida');
+    }
+
+    event.target.value = '';
+  };
+
+  lector.readAsText(archivo);
+}
+
+setInterval(actualizarAuto, 1000);
+actualizar();
+
+</script>
+
+</body>
+</html>
