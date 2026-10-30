@@ -1,19 +1,123 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mi Tacógrafo Pro</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mi Tacógrafo Pro</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#eef2f7;font-family:Arial;color:#172b4d}
+header{background:#102a43;color:white;padding:25px 18px;text-align:center}
+header h1{margin:0;font-size:27px}
+header p{color:#cbd5e1}
+nav{background:#173b5e;padding:12px;text-align:center}
+nav button{margin:4px;padding:11px;border:0;border-radius:8px;background:#18a66a;color:white;font-weight:bold}
+main{max-width:700px;margin:auto;padding:15px}
+.card{background:white;padding:20px;margin:15px 0;border-radius:14px;box-shadow:0 3px 12px #0001}
+h2{font-size:21px}
+input,select{width:100%;padding:12px;margin:7px 0 14px;border:1px solid #ccd5df;border-radius:8px;font-size:16px}
+.btn{background:#159b62;color:white;border:0;padding:13px;border-radius:8px;width:100%;font-size:16px;font-weight:bold}
+.item{padding:12px;border-bottom:1px solid #ddd}
+small{color:#64748b}
+footer{text-align:center;padding:25px;color:#64748b}
+</style>
 </head>
 <body>
-  <h1>🚛 Mi Tacógrafo Pro</h1>
-  <h2>Tu compañero de ruta en Europa</h2>
-
-  <p>Bienvenido a tu aplicación para camioneros.</p>
-
-  <button>📅 Mis jornadas</button>
-  <button>⏱️ Mi tacógrafo</button>
-  <button>💶 Mis ingresos</button>
-  <button>🚛 Trabajos extra</button>
+<header>
+<h1>🚛 Mi Tacógrafo Pro</h1>
+<p>Tu compañero de ruta en Europa 🇪🇺</p>
+</header>
+<nav>
+<button onclick="ver('jornada')">📅 Jornadas</button>
+<button onclick="ver('extra')">🔧 Extras</button>
+<button onclick="ver('resumen')">📊 Resumen</button>
+</nav>
+<main>
+<section class="card" id="jornada">
+<h2>📅 Registrar jornada</h2>
+<label>Fecha</label>
+<input type="date" id="fecha">
+<label>Hora de inicio</label>
+<input type="time" id="inicio">
+<label>Hora de finalización</label>
+<input type="time" id="fin">
+<label>Horas de descanso o pausa</label>
+<input type="number" id="pausa" min="0" step="0.25" value="0">
+<button class="btn" onclick="guardarJornada()">Guardar jornada</button>
+<div id="listaJornadas"></div>
+</section>
+<section class="card" id="extra" style="display:none">
+<h2>🔧 Trabajos extra</h2>
+<label>Descripción</label>
+<input id="descripcion" placeholder="Ejemplo: descarga adicional">
+<label>Importe (€)</label>
+<input type="number" id="importe" min="0" step="0.01">
+<button class="btn" onclick="guardarExtra()">Guardar trabajo extra</button>
+<div id="listaExtras"></div>
+</section>
+<section class="card" id="resumen" style="display:none">
+<h2>📊 Resumen general</h2>
+<p id="totalHoras"></p>
+<p id="totalExtras"></p>
+<button class="btn" onclick="exportar()">Exportar copia de seguridad</button>
+</section>
+</main>
+<footer>Mi Tacógrafo Pro · Versión 2.0</footer>
+<script>
+const $=id=>document.getElementById(id);
+let jornadas=JSON.parse(localStorage.getItem('mtp_jornadas')||'[]');
+let extras=JSON.parse(localStorage.getItem('mtp_extras')||'[]');
+$('fecha').value=new Date().toLocaleDateString('en-CA');
+function ver(id){
+['jornada','extra','resumen'].forEach(x=>$(x).style.display=x===id?'block':'none');
+actualizar();
+}
+function guardarJornada(){
+let fecha=$('fecha').value,inicio=$('inicio').value,fin=$('fin').value;
+let pausa=Number($('pausa').value);
+if(!fecha||!inicio||!fin||!Number.isFinite(pausa)||pausa<0){alert('Completa los datos correctamente');return}
+let a=inicio.split(':').map(Number),b=fin.split(':').map(Number);
+let minutos=(b[0]*60+b[1])-(a[0]*60+a[1]);
+if(minutos<0)minutos+=1440;
+if(minutos===0){alert('Revisa las horas');return}
+let horas=minutos/60-pausa;
+if(horas<0){alert('La pausa supera la jornada');return}
+jornadas.push({fecha,inicio,fin,pausa,horas});
+localStorage.setItem('mtp_jornadas',JSON.stringify(jornadas));
+actualizar();alert('Jornada guardada');
+}
+function guardarExtra(){
+let descripcion=$('descripcion').value.trim(),importe=Number($('importe').value);
+if(!descripcion||!$('importe').value||!Number.isFinite(importe)||importe<0){alert('Introduce datos válidos');return}
+extras.push({descripcion,importe});
+localStorage.setItem('mtp_extras',JSON.stringify(extras));
+$('descripcion').value='';$('importe').value='';
+actualizar();alert('Trabajo extra guardado');
+}
+function actualizar(){
+$('listaJornadas').replaceChildren();
+jornadas.forEach(j=>{
+let d=document.createElement('div');d.className='item';
+d.textContent=j.fecha+' · '+j.horas.toFixed(2)+' horas';
+$('listaJornadas').appendChild(d);
+});
+$('listaExtras').replaceChildren();
+extras.forEach(e=>{
+let d=document.createElement('div');d.className='item';
+d.textContent=e.descripcion+' · '+e.importe.toFixed(2)+' €';
+$('listaExtras').appendChild(d);
+});
+$('totalHoras').textContent='Horas registradas: '+jornadas.reduce((s,j)=>s+j.horas,0).toFixed(2);
+$('totalExtras').textContent='Trabajos extra: '+extras.reduce((s,e)=>s+e.importe,0).toFixed(2)+' €';
+}
+function exportar(){
+let datos=JSON.stringify({jornadas,extras},null,2);
+let a=document.createElement('a');
+a.href=URL.createObjectURL(new Blob([datos],{type:'application/json'}));
+a.download='copia-tacografo.json';a.click();
+setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+actualizar();
+</script>
 </body>
 </html>
