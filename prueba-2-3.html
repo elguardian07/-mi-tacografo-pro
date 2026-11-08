@@ -120,10 +120,10 @@ Los avisos son orientativos. Esta aplicación no sustituye al tacógrafo homolog
 <h2>🛣️ Registrar kilómetros diarios</h2>
 
 <label>Camión</label>
-<select id="camionKm"></select>
+<select id="camionKm" onchange="sugerirKmInicial()"></select>
 
 <label>Fecha</label>
-<input type="date" id="fechaKm">
+<input type="date" id="fechaKm" onchange="sugerirKmInicial()">
 
 <label>Cuentakilómetros inicial (km)</label>
 <input type="number" id="kmInicial" min="0" step="1">
