@@ -664,6 +664,26 @@ function editarKm(i) {
   ver('kilometros');
 }
 
+function sugerirKmInicial() {
+  if (editandoKm >= 0) return;
+
+  const camionId = $('camionKm').value;
+  const fecha = $('fechaKm').value;
+  const campo = $('kmInicial');
+
+  if (!camionId || !fecha) {
+    campo.value = '';
+    return;
+  }
+
+  const anteriores = kilometros
+    .filter(k => k.camionId === camionId && k.fecha < fecha)
+    .sort((a, b) => b.fecha.localeCompare(a.fecha));
+
+  campo.value = anteriores.length
+    ? anteriores[0].final
+    : '';
+}
 function limpiarKm() {
   editandoKm = -1;
 
