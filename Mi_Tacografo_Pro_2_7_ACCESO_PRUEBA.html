@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mi Tacógrafo Pro 2.7 · Prueba de acceso</title>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#eef2f7;font:16px Arial;color:#172b4d}
+header{background:#102a43;color:white;padding:25px 15px;text-align:center}
+header p{color:#cbd5e1}
+nav{background:#173b5e;text-align:center;padding:12px}
+nav button,nav .navlink,.smallbtn{margin:4px;padding:10px;border:0;border-radius:8px;background:#18a66a;color:white;font-weight:bold;cursor:pointer}
+main{max-width:750px;margin:auto;padding:15px}
+.card{background:white;padding:20px;margin:15px 0;border-radius:14px;box-shadow:0 3px 12px #0001}
+input,select{width:100%;padding:12px;margin:7px 0 14px;border:1px solid #ccd5df;border-radius:8px;font-size:16px}
+.btn{background:#159b62;color:white;border:0;padding:13px;border-radius:8px;width:100%;font-size:16px;font-weight:bold;margin:7px 0;cursor:pointer}
+.secondary{background:#64748b}
+.danger{background:#b91c1c}
+.item{padding:12px 0;border-bottom:1px solid #ddd}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.actions button{border:0;border-radius:6px;padding:9px;cursor:pointer}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.day{padding:10px 2px;text-align:center;background:#eef2f7;border-radius:6px;font-size:13px}
+.worked{background:#18a66a;color:white}
+.muted{color:#64748b;font-size:14px}
+footer{text-align:center;padding:25px;color:#64748b}
+/* Menú desplegable estilo tienda, adaptable a móvil */
+nav{position:sticky;top:0;z-index:30;background:#102a43;padding:10px 14px;text-align:left;box-shadow:0 3px 12px #0002}
+.menu-tienda{max-width:750px;margin:auto;position:relative}
+.menu-tienda summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;background:#18a66a;color:white;border-radius:12px;padding:14px 17px;font-size:17px;font-weight:bold;cursor:pointer;user-select:none}
+.menu-tienda summary::-webkit-details-marker{display:none}
+.menu-tienda summary::after{content:'☰';font-size:22px}
+.menu-tienda[open] summary::after{content:'✕'}
+.menu-opciones{position:absolute;top:calc(100% + 8px);left:0;right:0;background:white;border:1px solid #dbe4ef;border-radius:14px;padding:9px;box-shadow:0 12px 30px #0003;max-height:70vh;overflow-y:auto}
+nav .menu-opciones .navlink{display:flex;align-items:center;justify-content:space-between;text-decoration:none;color:#172b4d;background:white;padding:15px 12px;margin:2px 0;border-radius:9px;font-size:16px;font-weight:600}
+nav .menu-opciones .navlink::after{content:'›';font-size:25px;color:#64748b}
+nav .menu-opciones .navlink:active,nav .menu-opciones .navlink:focus{background:#e7f7ee;outline:2px solid #18a66a}
+/* Solo se muestra una pantalla desde el primer instante, incluso antes de ejecutar JS. */
+main > section.card{display:none}
+main > section.card#inicioApp{display:block}
+main > section.card.pantalla-activa{display:block !important}
+main > section.card.pantalla-oculta{display:none !important}
+
+main > section.card.pantalla-oculta{display:none !important}
+main > section.card#perfilBox.pantalla-oculta{display:none !important}
+main > section.card.pantalla-activa{display:block !important}
+
+/* Acceso 2.7: los datos operativos siguen siendo locales en esta prueba */
+body:not(.mtp-autenticado) nav, body:not(.mtp-autenticado) main {display:none!important}
+#mtp-acceso{max-width:530px;margin:24px auto;padding:20px;background:white;border-radius:14px;box-shadow:0 3px 12px #0001}
+body.mtp-autenticado #mtp-acceso{display:none}
+#mtp-acceso label{display:block;font-weight:600}
+#mtp-acceso .aviso{background:#fff7ed;border-left:4px solid #b45309;padding:12px;border-radius:6px;font-size:14px}
+#mtp-usuario{color:#d1fae5;font-size:13px;overflow-wrap:anywhere}
+#mtp-salir{display:none;max-width:190px;margin:12px auto 0;background:#dc2626}
+body.mtp-autenticado #mtp-salir{display:block}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>🚛 Mi Tacógrafo Pro</h1>
+<p>Tu compañero de ruta en Europa 🇪🇺</p>
+<div id="mtp-usuario" aria-live="polite"></div><button type="button" class="btn" id="mtp-salir">Cerrar sesión</button>
+</header>
+
+<nav aria-label="Menú principal">
+<details class="menu-tienda" id="menuTienda">
+<summary>Menú de Mi Tacógrafo Pro</summary>
+<div class="menu-opciones">
+<a class="navlink" href="#inicioApp" data-seccion="inicioApp">🏠 Inicio</a>
+<a class="navlink" href="#perfilBox" data-seccion="perfilBox">👤 Mi perfil</a>
+<a class="navlink" href="#jornada" data-seccion="jornada">📅 Mis jornadas</a>
+<a class="navlink" href="#automatico" data-seccion="automatico">⏱️ Registro automático</a>
+<a class="navlink" href="#kilometros" data-seccion="kilometros">🚛 Camiones y kilómetros</a>
+<a class="navlink" href="#calendario" data-seccion="calendario">🗓️ Calendario</a>
+<a class="navlink" href="#extra" data-seccion="extra">🔧 Trabajos extra</a>
+<a class="navlink" href="#resumen" data-seccion="resumen">📊 Resumen y copias</a>
+</div>
+</details>
+</nav>
+
+<section id="mtp-acceso" aria-label="Acceso a Mi Tacógrafo Pro">
+<h2>🔐 Mi Tacógrafo Pro · Acceso 2.7</h2>
+<p>Regístrate con tu correo, confirma el enlace que recibirás y accede a las herramientas.</p>
+<form id="mtp-form">
+<label for="mtp-email">Correo electrónico</label><input id="mtp-email" type="email" autocomplete="email" required placeholder="nombre@correo.com">
+<label for="mtp-password">Contraseña (mínimo 12 caracteres)</label><input id="mtp-password" type="password" minlength="12" autocomplete="current-password" required>
+<button class="btn" type="submit" id="mtp-entrar">Entrar</button>
+<button class="btn secondary" type="button" id="mtp-registro">Crear cuenta nueva</button>
+<button class="btn secondary" type="button" id="mtp-recuperar">Recuperar contraseña</button>
+</form>
+<p id="mtp-estado" role="status" aria-live="polite"></p>
+<p class="aviso"><strong>Versión de pruebas:</strong> el acceso por correo se conecta a Supabase. Tus jornadas, vehículos y kilómetros <strong>todavía se guardan únicamente en este navegador</strong>, no se sincronizan ni están aislados por usuario. No utilices esta versión con datos reales de varios conductores en el mismo dispositivo. Google, Apple, panel de propietario y pagos aún no están disponibles.</p>
+</section>
+<main><section class="card" id="inicioApp"><h2>🏠 Bienvenido a Mi Tacógrafo Pro</h2><p>Selecciona una herramienta desde el menú verde para comenzar.</p><p id="estadoGuardado" role="status" class="muted"></p><button class="btn" type="button" onclick="abrirSeccion('kilometros')">🚛 Ir a vehículos y kilómetros</button></section><div id="avisoAlmacenamiento" class="card" style="display:none;border:2px solid #b45309;background:#fff7ed;color:#7c2d12"><strong>⚠️ Vista previa sin almacenamiento permanente.</strong><p>Esta vista no permite guardar los datos de forma duradera. Puedes probar los botones, pero al cerrar podrías perder los registros. Para uso real, abre la aplicación desde una web HTTPS.</p></div>
+<section class="card" id="perfilBox"><h2>👤 Perfil profesional</h2><label>Actividad para los nuevos registros</label><select id="perfilActivo" onchange="cambiarPerfil()"><option value="asalariado">👷 Conductor asalariado</option><option value="autonomo">🚛 Transportista autónomo</option></select><p class="muted">Puedes utilizar ambos perfiles. Los registros económicos se separan por actividad; las horas de conducción se muestran también en conjunto. Los pagos y cuentas en línea todavía no están activados.</p><p id="planInfo"></p></section>
+
+<section class="card" id="jornada">
+<h2>📅 Registrar jornada manual</h2>
+
+<label>Fecha de inicio</label>
+<input type="date" id="fecha">
+
+<label>Fecha de finalización</label>
+<input type="date" id="fechaFin">
+<p class="muted">Puedes registrar jornadas que terminan al día siguiente. Indica ambas fechas y sus horas correspondientes.</p>
+
+<label>Camión (opcional)</label>
+<select id="camionJornada"></select>
+
+<label>Hora de inicio</label>
+<input type="time" id="inicio">
+
+<label>Hora de finalización</label>
+<input type="time" id="fin">
+
+<label>Horas de descanso o pausa</label>
+<input type="number" id="pausa" min="0" step="0.25" value="0">
+
+<label>Horas de conducción</label>
+<input type="number" id="conduccion" min="0" step="0.25" value="0">
+
+<button class="btn" id="btnGuardar" onclick="guardarJornada()">Guardar jornada</button>
+<button class="btn secondary" id="btnCancelar" style="display:none" onclick="cancelarEdicion()">Cancelar edición</button>
+
+<h2>Historial de jornadas</h2>
+<div id="listaJornadas"></div>
+</section>
+
+<section class="card" id="automatico" >
+
+<h2>⏱️ Registro automático asistido</h2>
+
+<label>Camión utilizado</label>
+<select id="camionAuto"></select>
+
+<p class="muted">
+Selecciona una actividad al comenzar y cámbiala cuando termines.
+El sistema registra los tiempos a partir de tus pulsaciones.
+</p>
+
+<p id="estadoAuto"></p>
+<p id="relojAuto" style="font-size:28px;font-weight:bold">00:00:00</p>
+
+<button class="btn" onclick="cambiarActividad('conduccion')">🚛 Iniciar conducción</button>
+<button class="btn" onclick="cambiarActividad('otros')">🔧 Otros trabajos</button>
+<button class="btn" onclick="cambiarActividad('pausa')">☕ Pausa / descanso</button>
+<button class="btn secondary" onclick="finalizarAuto()">🏁 Finalizar y guardar jornada</button>
+
+<p id="alertaAuto" class="muted"></p>
+
+<p class="muted">
+Los avisos son orientativos. Esta aplicación no sustituye al tacógrafo homologado.
+</p>
+
+</section>
+
+<section class="card" id="kilometros" >
+
+<h2>🚛 Mis camiones</h2>
+
+<label>Matrícula del vehículo</label>
+<input id="matricula" placeholder="Ej.: 1234 ABC" maxlength="24">
+
+<label>Tipo de vehículo</label><select id="tipoVehiculo"><option value="articulado">Camión articulado</option><option value="rigido">Camión rígido</option><option value="tren">Tren de carretera</option><option value="autobus">Autobús</option><option value="autocar">Autocar</option><option value="minibus">Minibús</option><option value="furgoneta">Furgoneta</option><option value="otro">Otro vehículo</option></select><label>Número de ejes del conjunto</label><input id="ejes" type="number" min="1" max="20" value="2"><label>MMA del vehículo o conjunto (toneladas)</label><input id="mma" type="number" min="0" step="0.01" placeholder="Ej.: 40"><label>Plazas incluido conductor (viajeros)</label><input id="plazas" type="number" min="1" step="1" placeholder="Ej.: 55"><label>Ámbito habitual</label><select id="ambito"><option value="nacional">Nacional</option><option value="internacional">Internacional / cabotaje</option></select><p class="muted">La obligación de tacógrafo depende de MMA, plazas, actividad, ámbito y excepciones legales; no se determina únicamente por los ejes.</p><label>Nombre o descripción</label>
+<input id="nombreCamion" placeholder="Ej.: Camión principal">
+
+<button class="btn" onclick="agregarCamion()">➕ Añadir camión</button>
+
+<div id="listaCamiones"></div>
+
+<h2>🛣️ Registrar kilómetros</h2><label>Modalidad</label><select id="modoKm" onchange="cambiarModoKm()"><option value="diario">Por día</option><option value="recorrido">Por recorrido (varios días)</option></select>
+
+<label>Camión</label>
+<select id="camionKm" onchange="sugerirKmInicial()"></select>
+
+<label>Fecha de inicio</label><input type="date" id="fechaKm" onchange="sugerirKmInicial()"><div id="camposRecorrido" style="display:none"><label>Fecha de finalización</label><input type="date" id="fechaFinKm"><label>Hora de inicio (opcional)</label><input type="time" id="horaInicioKm"><label>Hora de finalización (opcional)</label><input type="time" id="horaFinKm"></div>
+
+<label>Cuentakilómetros inicial (km)</label>
+<input type="number" id="kmInicial" min="0" step="1">
+
+<label>Cuentakilómetros final (km)</label>
+<input type="number" id="kmFinal" min="0" step="1">
+
+<button class="btn" id="btnKm" onclick="guardarKm()">Guardar kilómetros</button>
+<button class="btn secondary" id="cancelarKm" style="display:none" onclick="limpiarKm()">Cancelar edición</button>
+
+<h2>📆 Resumen mensual por camión</h2>
+
+<label>Mes</label>
+<input type="month" id="mesKm" onchange="actualizarKm()">
+
+<label>Camión</label>
+<select id="camionMes" onchange="actualizarKm()"></select>
+
+<div id="resumenKm"></div>
+
+<p class="muted">
+Los recorridos que cruzan meses se muestran por separado para no asignar kilómetros a un mes sin una lectura intermedia. Los totales no duplican recorridos.
+</p>
+
+<h2>📋 Historial de kilómetros</h2>
+<div id="listaKm"></div>
+
+</section>
+
+<section class="card" id="calendario" >
+
+<h2>🗓️ Calendario mensual</h2>
+<input type="month" id="mes" onchange="mostrarCalendario()">
+<div class="calendar" id="cuadricula"></div>
+
+</section>
+
+<section class="card" id="extra" >
+
+<h2>🔧 Trabajos extra</h2>
+
+<label>Descripción</label>
+<input id="descripcion" placeholder="Ejemplo: descarga adicional">
+
+<label>Importe (€)</label>
+<input type="number" id="importe" min="0" step="0.01">
+
+<button class="btn" onclick="guardarExtra()">Guardar trabajo extra</button>
+
+<div id="listaExtras"></div>
+
+</section>
+
+<section class="card" id="resumen" >
+
+<h2>📊 Resumen general</h2>
+
+<p id="totalKm"></p>
+<p id="totalHoras"></p>
+<p id="totalExtras"></p>
+<p id="totalConduccion"></p>
+<p id="totalNocturnas"></p>
+<p id="totalExtraHoras"></p>
+
+<button class="btn" onclick="exportar()">💾 Exportar copia de seguridad</button>
+
+<label>Importar copia de seguridad</label>
+<input type="file" accept=".json,application/json" onchange="importar(event)">
+
+<p class="muted">
+Los datos se guardan en este navegador.
+Exporta copias de seguridad con frecuencia.
+</p>
+
+</section>
+
+</main>
+
+<footer>Mi Tacógrafo Pro · Versión 2.7 (acceso de prueba; registros locales)</footer>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+
+const keyJ = 'mtp_jornadas';
+const keyE = 'mtp_extras';
+const keyC = 'mtp_camiones';
+const keyK = 'mtp_kilometros';
+const keyA = 'mtp_auto';
+const keyP = 'mtp_perfil';
+
+let almacenamientoDisponible = true;
+try { const t='mtp_test_storage'; localStorage.setItem(t,'1'); localStorage.removeItem(t); }
+catch(e) { almacenamientoDisponible=false; }
+const memoriaTemporal = {};
+function guardarClave(clave, valor) {
+  if (!almacenamientoDisponible) { memoriaTemporal[clave]=valor; mostrarAvisoAlmacenamiento(); return; }
+  try { localStorage.setItem(clave,valor); }
+  catch(e) { almacenamientoDisponible=false; memoriaTemporal[clave]=valor; mostrarAvisoAlmacenamiento(); }
+}
+function quitarClave(clave) {
+  if (!almacenamientoDisponible) { delete memoriaTemporal[clave]; return; }
+  try { localStorage.removeItem(clave); } catch(e) { almacenamientoDisponible=false; }
+}
+function mostrarAvisoAlmacenamiento() {
+  const aviso=document.getElementById('avisoAlmacenamiento');
+  if(aviso) aviso.style.display=almacenamientoDisponible?'none':'block';
+  const estado=document.getElementById('estadoGuardado');
+  if(estado) estado.textContent=almacenamientoDisponible?'✅ Almacenamiento local disponible en este navegador.':'⚠️ Almacenamiento permanente no disponible en esta vista previa.';
+}
+function leer(clave, defecto) {
+  try {
+    const valor = JSON.parse(almacenamientoDisponible ? localStorage.getItem(clave) : (memoriaTemporal[clave] || null));
+    return valor === null ? defecto : valor;
+  } catch (e) {
+    return defecto;
+  }
+}
+
+let jornadas = leer(keyJ, []);
+let extras = leer(keyE, []);
+let camiones = leer(keyC, []);
+let kilometros = leer(keyK, []);
+let auto = leer(keyA, null);
+
+if (!Array.isArray(jornadas)) jornadas = [];
+if (!Array.isArray(extras)) extras = [];
+if (!Array.isArray(camiones)) camiones = [];
+if (!Array.isArray(kilometros)) kilometros = [];
+
+let editando = -1;
+let editandoKm = -1;
+let perfilActivo = leer(keyP, 'asalariado');
+if (!['asalariado','autonomo'].includes(perfilActivo)) perfilActivo='asalariado';
+
+function fechaLocal(d = new Date()) {
+  return d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
+}
+
+$('fecha').value = fechaLocal();
+$('fechaFin').value = fechaLocal();
+$('fechaKm').value = fechaLocal();
+$('fechaFinKm').value = fechaLocal();
+$('perfilActivo').value=perfilActivo;
+$('mes').value = fechaLocal().slice(0, 7);
+$('mesKm').value = fechaLocal().slice(0, 7);
+
+function cambiarPerfil(){perfilActivo=$('perfilActivo').value;guardarClave(keyP,JSON.stringify(perfilActivo));actualizar();}
+function cambiarModoKm(){const multi=$('modoKm').value==='recorrido';$('camposRecorrido').style.display=multi?'block':'none';if(!multi)$('fechaFinKm').value=$('fechaKm').value;}
+function finKm(k){return k.fechaFin||k.fecha;}
+function inicioKm(k){return k.fechaInicio||k.fecha;}
+function periodoSolapado(a,b,c,d){return a<=d && c<=b;}
+function guardarDatos() {
+  guardarClave(keyJ, JSON.stringify(jornadas));
+  guardarClave(keyE, JSON.stringify(extras));
+  guardarClave(keyC, JSON.stringify(camiones));
+  guardarClave(keyK, JSON.stringify(kilometros));
+  mostrarAvisoAlmacenamiento();
+}
+
+const seccionesApp = ['inicioApp','perfilBox','jornada','automatico','kilometros','calendario','extra','resumen'];
+function abrirSeccion(id) {
+  if (!seccionesApp.includes(id)) return;
+  const menu = $('menuTienda');
+  if (menu) menu.open = false;
+  ver(id);
+}
+function ver(id) {
+  if (!seccionesApp.includes(id)) return;
+  seccionesApp.forEach(nombre => {
+    const seccion = $(nombre);
+    seccion.classList.toggle('pantalla-activa', nombre === id);
+    seccion.classList.toggle('pantalla-oculta', nombre !== id);
+    seccion.style.removeProperty('display');
+  });
+  if (location.hash !== '#' + id) history.replaceState(null, '', '#' + id);
+  actualizar();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('#menuTienda .navlink').forEach(enlace => {
+  enlace.addEventListener('click', evento => {
+    evento.preventDefault();
+    abrirSeccion(enlace.dataset.seccion);
+  });
+});
+
+function fechaFinRegistro(j) {
+  if (j.fechaFin) return j.fechaFin;
+  // Compatibilidad con registros anteriores a 2.4.
+  return j.fin && j.inicio && j.fin < j.inicio
+    ? diaSiguiente(j.fecha)
+    : j.fecha;
+}
+
+function diaSiguiente(fecha) {
+  const d = new Date(fecha + 'T12:00:00');
+  d.setDate(d.getDate() + 1);
+  return fechaLocal(d);
+}
+
+function calcular(fechaInicio, inicio, fechaFin, fin, pausa) {
+  const desde = new Date(fechaInicio + 'T' + inicio + ':00');
+  const hasta = new Date(fechaFin + 'T' + fin + ':00');
+  const ms = hasta.getTime() - desde.getTime();
+  if (!Number.isFinite(ms) || ms <= 0 || ms > 7 * 86400000) return null;
+  const horas = ms / 3600000 - pausa;
+  return horas >= 0 ? horas : null;
+}
+
+function guardarJornada() {
+  const fecha = $('fecha').value;
+  const fechaFin = $('fechaFin').value;
+  const inicio = $('inicio').value;
+  const fin = $('fin').value;
+  const pausa = Number($('pausa').value);
+  const conduccion = Number($('conduccion').value);
+
+  if (
+    !fecha || !fechaFin || !inicio || !fin ||
+    $('pausa').value === '' ||
+    $('conduccion').value === '' ||
+    !Number.isFinite(pausa) || pausa < 0 ||
+    !Number.isFinite(conduccion) || conduccion < 0
+  ) {
+    alert('Completa los datos correctamente');
+    return;
+  }
+
+  const horas = calcular(fecha, inicio, fechaFin, fin, pausa);
+
+  if (horas === null || conduccion > horas) {
+    alert('Revisa las horas y los descansos');
+    return;
+  }
+
+  const duplicado = jornadas.some((j, i) =>
+    i !== editando &&
+    j.fecha === fecha &&
+    fechaFinRegistro(j) === fechaFin &&
+    j.inicio === inicio &&
+    j.fin === fin
+  );
+
+  if (duplicado) {
+    alert('Esta jornada ya está registrada');
+    return;
+  }
+
+  const anterior = editando >= 0 ? jornadas[editando] : {};
+
+  const registro = {
+    ...anterior,
+    perfil: anterior.perfil || perfilActivo,
+    fecha,
+    fechaFin,
+    inicio,
+    fin,
+    pausa,
+    horas,
+    conduccion,
+    camionId: $('camionJornada').value || null
+  };
+
+  if (editando >= 0) {
+    jornadas[editando] = registro;
+  } else {
+    jornadas.push(registro);
+  }
+
+  guardarDatos();
+  cancelarEdicion();
+  actualizar();
+
+  alert('Jornada guardada correctamente');
+}
+
+function editarJornada(i) {
+  const j = jornadas[i];
+  if (!j) return;
+
+  editando = i;
+
+  $('fecha').value = j.fecha;
+  $('fechaFin').value = fechaFinRegistro(j);
+  $('inicio').value = j.inicio;
+  $('fin').value = j.fin;
+  $('pausa').value = j.pausa || 0;
+  $('conduccion').value = j.conduccion || 0;
+  $('camionJornada').value = j.camionId || '';
+
+  $('btnGuardar').textContent = 'Guardar cambios';
+  $('btnCancelar').style.display = 'block';
+
+  ver('jornada');
+}
+
+function cancelarEdicion() {
+  editando = -1;
+
+  $('btnGuardar').textContent = 'Guardar jornada';
+  $('btnCancelar').style.display = 'none';
+
+  $('fecha').value = fechaLocal();
+  $('fechaFin').value = fechaLocal();
+  $('inicio').value = '';
+  $('fin').value = '';
+  $('pausa').value = 0;
+  $('conduccion').value = 0;
+  $('camionJornada').value = '';
+}
+
+function eliminarJornada(i) {
+  if (confirm('¿Eliminar esta jornada?')) {
+    jornadas.splice(i, 1);
+    guardarDatos();
+    actualizar();
+  }
+}
+
+function guardarExtra() {
+  const descripcion = $('descripcion').value.trim();
+  const importe = Number($('importe').value);
+
+  if (
+    !descripcion ||
+    $('importe').value === '' ||
+    !Number.isFinite(importe) ||
+    importe < 0
+  ) {
+    alert('Introduce datos válidos');
+    return;
+  }
+
+  extras.push({ descripcion, importe, perfil: perfilActivo });
+
+  guardarDatos();
+
+  $('descripcion').value = '';
+  $('importe').value = '';
+
+  actualizar();
+  alert('Trabajo extra guardado');
+}
+
+function eliminarExtra(i) {
+  if (confirm('¿Eliminar este trabajo extra?')) {
+    extras.splice(i, 1);
+    guardarDatos();
+    actualizar();
+  }
+}
+
+function boton(texto, funcion) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.textContent = texto;
+  b.onclick = funcion;
+  return b;
+}
+
+function mostrarCalendario() {
+  const mes = $('mes').value;
+  if (!mes) return;
+
+  const [anio, m] = mes.split('-').map(Number);
+  const dias = new Date(anio, m, 0).getDate();
+  const inicio = (new Date(anio, m - 1, 1).getDay() + 6) % 7;
+
+  const grid = $('cuadricula');
+  grid.replaceChildren();
+
+  ['L', 'M', 'X', 'J', 'V', 'S', 'D'].forEach(x => {
+    const d = document.createElement('div');
+    d.className = 'day';
+    d.textContent = x;
+    grid.appendChild(d);
+  });
+
+  for (let i = 0; i < inicio; i++) {
+    grid.appendChild(document.createElement('div'));
+  }
+
+  for (let dia = 1; dia <= dias; dia++) {
+    const fecha = mes + '-' + String(dia).padStart(2, '0');
+    const registros = jornadas.filter(j => j.fecha === fecha);
+
+    const d = document.createElement('div');
+    d.className = 'day' + (registros.length ? ' worked' : '');
+    d.textContent = dia;
+
+    if (registros.length) {
+      d.title = registros.reduce(
+        (s, j) => s + Number(j.horas || 0), 0
+      ).toFixed(2) + ' horas';
+
+      d.onclick = () => ver('jornada');
+    }
+
+    grid.appendChild(d);
+  }
+}
+
+function nocturnas(j) {
+  if (!j.inicio || !j.fin || !j.fecha) return 0;
+  const desde = new Date(j.fecha + 'T' + j.inicio + ':00');
+  const hasta = new Date(fechaFinRegistro(j) + 'T' + j.fin + ':00');
+  if (!(hasta > desde)) return 0;
+  // Horas brutas en la franja orientativa 22:00–06:00.
+  let minutos = 0;
+  for (let t = desde.getTime(); t < hasta.getTime(); t += 60000) {
+    const h = new Date(t).getHours();
+    if (h >= 22 || h < 6) minutos++;
+  }
+  return minutos / 60;
+}
+
+function nombreVehiculo(id) {
+  const c = camiones.find(x => x.id === id);
+
+  if (!c) return 'Vehículo no disponible';
+
+  return c.matricula + (c.nombre ? ' · ' + c.nombre : '');
+}
+
+function opcionesVehiculos(id, permitirVacio) {
+  const elemento = $(id);
+  const actual = elemento.value;
+
+  elemento.replaceChildren();
+
+  if (permitirVacio) {
+    const opcion = document.createElement('option');
+    opcion.value = '';
+    opcion.textContent = 'Sin seleccionar';
+    elemento.appendChild(opcion);
+  }
+
+  camiones.forEach(c => {
+    const opcion = document.createElement('option');
+    opcion.value = c.id;
+    opcion.textContent = nombreVehiculo(c.id);
+    elemento.appendChild(opcion);
+  });
+
+  if ([...elemento.options].some(o => o.value === actual)) {
+    elemento.value = actual;
+  }
+}
+
+function agregarCamion() {
+  const matricula = $('matricula').value
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, ' ');
+
+  const nombre = $('nombreCamion').value.trim();
+
+  if (!matricula) {
+    alert('Introduce la matrícula');
+    return;
+  }
+
+  if (camiones.some(c => c.matricula === matricula)) {
+    alert('Esta matrícula ya está registrada');
+    return;
+  }
+
+  camiones.push({
+    id: 'c' + Date.now() + '_' +
+      Math.random().toString(36).slice(2, 7),
+    matricula,
+    nombre, tipo:$('tipoVehiculo').value, ejes:Number($('ejes').value), mma:$('mma').value===''?null:Number($('mma').value), plazas:$('plazas').value===''?null:Number($('plazas').value), ambito:$('ambito').value
+  });
+
+  guardarDatos();
+
+  $('matricula').value = '';
+  $('nombreCamion').value = '';
+
+  actualizar();
+  alert('Vehículo añadido correctamente');
+}
+
+function eliminarCamion(id) {
+  const tieneKm = kilometros.some(k => k.camionId === id);
+  const tieneJornadas = jornadas.some(j => j.camionId === id);
+
+  if (tieneKm || tieneJornadas) {
+    alert(
+      'Este camión tiene registros asociados. ' +
+      'Elimina o reasigna primero sus registros.'
+    );
+    return;
+  }
+
+  if (confirm('¿Eliminar este camión?')) {
+    camiones = camiones.filter(c => c.id !== id);
+    guardarDatos();
+    actualizar();
+  }
+}
+
+function guardarKm() {
+ const camionId=$('camionKm').value, fecha=$('fechaKm').value;
+ const modo=$('modoKm').value, fechaFin=modo==='diario'?fecha:$('fechaFinKm').value;
+ const a=$('kmInicial').value,b=$('kmFinal').value,inicial=Number(a),final=Number(b);
+ const horaInicio=modo==='recorrido'?$('horaInicioKm').value:'',horaFin=modo==='recorrido'?$('horaFinKm').value:'';
+ if(!camionId||!camiones.some(c=>c.id===camionId)||!fecha||!fechaFin||fechaFin<fecha||a===''||b===''||!Number.isSafeInteger(inicial)||!Number.isSafeInteger(final)||inicial<0||final<inicial){alert('Revisa las fechas y el cuentakilómetros. La fecha final y los km finales no pueden ser menores.');return;}
+ if(fechaFin===fecha&&horaInicio&&horaFin&&horaFin<horaInicio){alert('La hora final debe ser posterior a la inicial cuando las fechas coinciden.');return;}
+ const conflicto=kilometros.some((k,i)=>i!==editandoKm&&k.camionId===camionId&&periodoSolapado(fecha,fechaFin,inicioKm(k),finKm(k)));
+ if(conflicto){alert('Este vehículo ya tiene un registro que coincide con alguna de esas fechas. Revisa o edita el existente.');return;}
+ const registro={camionId,fecha,fechaInicio:fecha,fechaFin,modo,inicial,final,horaInicio,horaFin,perfil:perfilActivo};
+ if(editandoKm>=0)kilometros[editandoKm]=registro;else kilometros.push(registro);
+ guardarDatos();limpiarKm();actualizar();alert('Kilómetros guardados correctamente');
+}
+function editarKm(i){const k=kilometros[i];if(!k)return;editandoKm=i;
+ $('camionKm').value=k.camionId;$('modoKm').value=k.modo||((finKm(k)>inicioKm(k))?'recorrido':'diario');cambiarModoKm();
+ $('fechaKm').value=inicioKm(k);$('fechaFinKm').value=finKm(k);$('horaInicioKm').value=k.horaInicio||'';$('horaFinKm').value=k.horaFin||'';
+ $('kmInicial').value=k.inicial;$('kmFinal').value=k.final;$('btnKm').textContent='Guardar cambios';$('cancelarKm').style.display='block';ver('kilometros');
+}
+function sugerirKmInicial(){if(editandoKm>=0)return;const id=$('camionKm').value,fecha=$('fechaKm').value;
+ const prev=kilometros.filter(k=>k.camionId===id&&finKm(k)<fecha).sort((a,b)=>finKm(b).localeCompare(finKm(a)));
+ $('kmInicial').value=prev.length?prev[0].final:'';
+ if($('modoKm').value==='diario')$('fechaFinKm').value=fecha;
+}
+function limpiarKm(){editandoKm=-1;$('btnKm').textContent='Guardar kilómetros';$('cancelarKm').style.display='none';$('fechaKm').value=fechaLocal();$('fechaFinKm').value=fechaLocal();$('horaInicioKm').value='';$('horaFinKm').value='';$('kmInicial').value='';$('kmFinal').value='';}
+function eliminarKm(i) {
+  if (confirm('¿Eliminar este registro de kilómetros?')) {
+    kilometros.splice(i, 1);
+
+    if (editandoKm === i) limpiarKm();
+
+    guardarDatos();
+    actualizar();
+  }
+}
+
+function actualizarKm() {
+  ['camionKm', 'camionMes', 'camionJornada', 'camionAuto']
+    .forEach(id => {
+      opcionesVehiculos(
+        id,
+        id === 'camionJornada' || id === 'camionAuto'
+      );
+    });
+
+  const lc = $('listaCamiones');
+  lc.replaceChildren();
+
+  camiones.forEach(c => {
+    const d = document.createElement('div');
+    d.className = 'item';
+
+    d.append(
+      document.createTextNode(nombreVehiculo(c.id) + ' · '+(c.tipo||'Tipo sin especificar')+' · '+(c.ejes||'?')+' ejes '),
+      boton('🗑️ Eliminar', () => eliminarCamion(c.id))
+    );
+
+    lc.appendChild(d);
+  });
+
+  const lk = $('listaKm');
+  lk.replaceChildren();
+
+  kilometros
+    .map((k, i) => ({ ...k, i }))
+    .sort((a, b) => inicioKm(b).localeCompare(inicioKm(a)))
+    .forEach(k => {
+      const d = document.createElement('div');
+      d.className = 'item';
+
+      d.appendChild(document.createTextNode(
+        inicioKm(k) + (finKm(k)!==inicioKm(k)?' → '+finKm(k):'') + ' · ' +
+        nombreVehiculo(k.camionId) + ' · ' +
+        k.inicial + ' → ' + k.final + ' km · ' +
+        (k.final - k.inicial) + ' km'
+      ));
+
+      const acciones = document.createElement('div');
+      acciones.className = 'actions';
+
+      acciones.append(
+        boton('✏️ Editar', () => editarKm(k.i)),
+        boton('🗑️ Eliminar', () => eliminarKm(k.i))
+      );
+
+      d.appendChild(acciones);
+      lk.appendChild(d);
+    });
+
+  const mes = $('mesKm').value;
+  const id = $('camionMes').value;
+
+  const registros = kilometros
+    .filter(k => k.camionId === id && inicioKm(k).startsWith(mes) && finKm(k).startsWith(mes))
+    .sort((a, b) => inicioKm(a).localeCompare(inicioKm(b)));
+
+  const total = registros.reduce(
+    (s, k) => s + k.final - k.inicial, 0
+  );
+
+  const resumen = $('resumenKm');
+  resumen.replaceChildren();
+
+  const p = document.createElement('p');
+
+  if (registros.length) {
+    p.textContent =
+      '📅 ' + registros.length + ' registros · ' +
+      total.toLocaleString('es-ES') + ' km acumulados. ' +
+      'Cuentakilómetros inicial: ' +
+      registros[0].inicial.toLocaleString('es-ES') + ' km. ' +
+      'Cuentakilómetros final: ' +
+      registros[registros.length - 1].final.toLocaleString('es-ES') +
+      ' km.';
+  } else {
+    p.textContent = 'Sin registros para este camión y mes.';
+  }
+
+  resumen.appendChild(p);
+  const cruzados=kilometros.filter(k=>k.camionId===id&&periodoSolapado(inicioKm(k),finKm(k),mes+'-01',mes+'-31')&&(!inicioKm(k).startsWith(mes)||!finKm(k).startsWith(mes)));
+  if(cruzados.length){const aviso=document.createElement('p');aviso.className='muted';aviso.textContent='⚠️ '+cruzados.length+' recorrido(s) cruzan los límites de este mes y no están incluidos en el total mensual. Sus kilómetros sí figuran en el total general.';resumen.appendChild(aviso);}
+
+
+  const kmTotales = kilometros.reduce(
+    (s, k) => s + k.final - k.inicial, 0
+  );
+
+  $('totalKm').textContent =
+    'Kilómetros registrados (todos los vehículos y perfiles): ' +
+    kmTotales.toLocaleString('es-ES') + ' km';
+}
+
+function guardarAuto() {
+  if (auto) {
+    guardarClave(keyA, JSON.stringify(auto));
+  } else {
+    quitarClave(keyA);
+  }
+}
+
+function cambiarActividad(tipo) {
+  const ahora = Date.now();
+
+  if (!auto) {
+    auto = {
+      inicio: ahora,
+      actividad: tipo,
+      desde: ahora,
+      segmentos: [],
+      camionId: $('camionAuto').value || null,
+      perfil: perfilActivo
+    };
+  } else {
+    if (auto.actividad === tipo) {
+      alert('Esa actividad ya está activa');
+      return;
+    }
+
+    auto.segmentos.push({
+      tipo: auto.actividad,
+      inicio: auto.desde,
+      fin: ahora
+    });
+
+    auto.actividad = tipo;
+    auto.desde = ahora;
+  }
+
+  guardarAuto();
+  actualizarAuto();
+}
+
+function segmentosActuales() {
+  if (!auto) return [];
+
+  return [
+    ...auto.segmentos,
+    {
+      tipo: auto.actividad,
+      inicio: auto.desde,
+      fin: Date.now()
+    }
+  ];
+}
+
+function tiempo(segmentos, tipo) {
+  return segmentos
+    .filter(x => x.tipo === tipo)
+    .reduce((s, x) => s + (x.fin - x.inicio), 0) / 3600000;
+}
+
+function reloj(ms) {
+  const segundos = Math.floor(ms / 1000);
+
+  return [
+    Math.floor(segundos / 3600),
+    Math.floor((segundos % 3600) / 60),
+    segundos % 60
+  ]
+    .map(x => String(x).padStart(2, '0'))
+    .join(':');
+}
+
+function actualizarAuto() {
+  if (!auto) {
+    $('estadoAuto').textContent = 'Sin jornada automática activa';
+    $('relojAuto').textContent = '00:00:00';
+    $('alertaAuto').textContent = '';
+    return;
+  }
+
+  const segmentos = segmentosActuales();
+  const duracion = Date.now() - auto.desde;
+  const conduccion = tiempo(segmentos, 'conduccion');
+
+  const nombres = {
+    conduccion: '🚛 Conducción',
+    otros: '🔧 Otros trabajos',
+    pausa: '☕ Pausa / descanso'
+  };
+
+  $('estadoAuto').textContent =
+    'Actividad actual: ' + nombres[auto.actividad];
+
+  $('relojAuto').textContent = reloj(duracion);
+
+  const avisos = [];
+
+  if (
+    auto.actividad === 'conduccion' &&
+    duracion >= 4.5 * 3600000
+  ) {
+    avisos.push(
+      '⚠️ Has alcanzado 4 h 30 min en esta actividad de conducción. ' +
+      'Comprueba las pausas reglamentarias.'
+    );
+  }
+
+  if (conduccion > 9) {
+    avisos.push(
+      '⚠️ Más de 9 horas de conducción registradas. ' +
+      'Comprueba si corresponde una ampliación legal.'
+    );
+  }
+
+  $('alertaAuto').textContent = avisos.join(' ');
+}
+
+function finalizarAuto() {
+  if (!auto) {
+    alert('No hay jornada automática activa');
+    return;
+  }
+
+  const ahora = Date.now();
+  const segmentos = segmentosActuales();
+
+  const total = (ahora - auto.inicio) / 3600000;
+  const pausa = tiempo(segmentos, 'pausa');
+  const conduccion = tiempo(segmentos, 'conduccion');
+  const horas = total - pausa;
+
+  if (ahora - auto.inicio >= 24 * 3600000) {
+    alert(
+      'La sesión supera 24 horas. ' +
+      'Revisa el registro antes de guardarlo.'
+    );
+    return;
+  }
+
+  if (!confirm('¿Finalizar y guardar la jornada automática?')) {
+    return;
+  }
+
+  const ini = new Date(auto.inicio);
+  const fin = new Date(ahora);
+
+  function hh(d) {
+    return String(d.getHours()).padStart(2, '0') +
+      ':' +
+      String(d.getMinutes()).padStart(2, '0');
+  }
+
+  jornadas.push({
+    fecha: fechaLocal(ini),
+    fechaFin: fechaLocal(fin),
+    inicio: hh(ini),
+    fin: hh(fin),
+    pausa: Number(pausa.toFixed(4)),
+    conduccion: Number(conduccion.toFixed(4)),
+    horas: Number(horas.toFixed(4)),
+    camionId: auto.camionId || null,
+    perfil: auto.perfil || perfilActivo,
+    modo: 'automatico',
+    segmentos
+  });
+
+  auto = null;
+
+  guardarAuto();
+  guardarDatos();
+  actualizar();
+
+  ver('jornada');
+
+  alert('Jornada automática guardada');
+}
+
+function actualizar() {
+  const lista = $('listaJornadas');
+  lista.replaceChildren();
+
+  jornadas.forEach((j, i) => {
+    const d = document.createElement('div');
+    const texto = document.createElement('div');
+    const acciones = document.createElement('div');
+
+    d.className = 'item';
+    acciones.className = 'actions';
+
+    texto.textContent =
+      j.fecha + ' · ' + (j.perfil==='autonomo'?'Autónomo':'Asalariado')+' · ' +
+      Number(j.horas || 0).toFixed(2) +
+      ' horas' +
+      (j.modo === 'automatico' ? ' · ⏱️' : '');
+
+    acciones.append(
+      boton('✏️ Editar', () => editarJornada(i)),
+      boton('🗑️ Eliminar', () => eliminarJornada(i))
+    );
+
+    d.append(texto, acciones);
+    lista.appendChild(d);
+  });
+
+  const listaExtras = $('listaExtras');
+  listaExtras.replaceChildren();
+
+  extras.forEach((e, i) => {
+    const d = document.createElement('div');
+    d.className = 'item';
+
+    d.append(
+      document.createTextNode(
+        (e.perfil==='autonomo'?'Autónomo':'Asalariado')+' · '+e.descripcion + ' · ' +
+        Number(e.importe || 0).toFixed(2) + ' € '
+      ),
+      boton('🗑️', () => eliminarExtra(i))
+    );
+
+    listaExtras.appendChild(d);
+  });
+
+  function suma(campo) {
+    return jornadas.reduce(
+      (s, j) => s + Number(j[campo] || 0), 0
+    );
+  }
+
+  $('planInfo').textContent=perfilActivo==='asalariado'?'Acceso gratuito previsto para conductores asalariados.':'Autónomos: prueba gratuita prevista de 30 días sin tarjeta; después, 4,99 €/mes o 49,99 €/año. Suscripciones aún no habilitadas.';
+  $('totalHoras').textContent =
+    'Horas registradas: ' + suma('horas').toFixed(2);
+
+  $('totalExtras').textContent =
+    'Trabajos extra: ' +
+    extras.reduce(
+      (s, e) => s + Number(e.importe || 0), 0
+    ).toFixed(2) + ' €';
+
+  $('totalConduccion').textContent =
+    'Horas de conducción: ' + suma('conduccion').toFixed(2);
+
+  $('totalNocturnas').textContent =
+    'Horas en horario nocturno (brutas): ' +
+    jornadas.reduce(
+      (s, j) => s + nocturnas(j), 0
+    ).toFixed(2);
+
+  $('totalExtraHoras').textContent =
+    'Horas superiores a 8 por jornada (orientativo): ' +
+    jornadas.reduce(
+      (s, j) => s + Math.max(0, Number(j.horas || 0) - 8), 0
+    ).toFixed(2);
+
+  mostrarCalendario();
+  actualizarAuto();
+  actualizarKm();
+}
+
+function exportar() {
+  const datos = JSON.stringify({
+    jornadas,
+    extras,
+    camiones,
+    kilometros,
+    auto, perfilActivo
+  }, null, 2);
+
+  const blob = new Blob(
+    [datos],
+    { type: 'application/json' }
+  );
+
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'copia-tacografo-2-5.json';
+
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+function importar(event) {
+  const archivo = event.target.files[0];
+  if (!archivo) return;
+
+  const lector = new FileReader();
+
+  lector.onload = () => {
+    try {
+      const datos = JSON.parse(lector.result);
+
+      if (
+        !Array.isArray(datos.jornadas) ||
+        !Array.isArray(datos.extras)
+      ) {
+        throw new Error('Formato incorrecto');
+      }
+
+      if (confirm(
+        'La importación sustituirá los registros actuales. ¿Continuar?'
+      )) {
+        jornadas = datos.jornadas;
+        extras = datos.extras;
+
+        camiones = Array.isArray(datos.camiones)
+          ? datos.camiones
+          : [];
+
+        kilometros = Array.isArray(datos.kilometros)
+          ? datos.kilometros
+          : [];
+
+        auto = datos.auto && typeof datos.auto === 'object'
+          ? datos.auto
+          : null;
+
+        perfilActivo=['asalariado','autonomo'].includes(datos.perfilActivo)?datos.perfilActivo:perfilActivo;guardarClave(keyP,JSON.stringify(perfilActivo));$('perfilActivo').value=perfilActivo;
+        guardarDatos();
+        guardarAuto();
+        cancelarEdicion();
+        actualizar();
+
+        alert('Copia importada correctamente');
+      }
+    } catch (e) {
+      alert('El archivo no contiene una copia válida');
+    }
+
+    event.target.value = '';
+  };
+
+  lector.readAsText(archivo);
+}
+
+window.addEventListener('hashchange', () => {
+  const id = location.hash.slice(1);
+  if (seccionesApp.includes(id)) ver(id);
+});
+setInterval(actualizarAuto, 1000);
+mostrarAvisoAlmacenamiento();
+actualizar();
+const inicial = location.hash.slice(1);
+ver(seccionesApp.includes(inicial) ? inicial : 'inicioApp');
+
+</script>
+
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+const URL_PROYECTO='https://wapnyypngxrmflavndxg.supabase.co';
+const CLAVE_PUBLICA='sb_publishable_iD-yQovMbnyCbLHNj1Hj3g_87Sf5fes';
+const supabase=createClient(URL_PROYECTO,CLAVE_PUBLICA,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+const el=id=>document.getElementById(id);
+const estado=mensaje=>{el('mtp-estado').textContent=mensaje};
+function mostrarSesion(session){
+ const email=session?.user?.email||'';
+ document.body.classList.toggle('mtp-autenticado',Boolean(session?.user));
+ el('mtp-usuario').textContent=email?'Sesión iniciada: '+email:'';
+}
+const {data:{session},error}=await supabase.auth.getSession();
+if(error) estado('No se pudo recuperar la sesión: '+error.message);
+mostrarSesion(session);
+supabase.auth.onAuthStateChange((_evento,sesion)=>mostrarSesion(sesion));
+el('mtp-form').addEventListener('submit',async evento=>{
+ evento.preventDefault();estado('Comprobando acceso…');
+ const {error}=await supabase.auth.signInWithPassword({email:el('mtp-email').value.trim(),password:el('mtp-password').value});
+ estado(error?'No se pudo iniciar sesión: '+error.message:'Sesión iniciada.');
+});
+el('mtp-registro').addEventListener('click',async()=>{
+ if(!el('mtp-form').reportValidity())return;
+ estado('Creando cuenta…');
+ const {data,error}=await supabase.auth.signUp({email:el('mtp-email').value.trim(),password:el('mtp-password').value,options:{emailRedirectTo:location.origin+location.pathname}});
+ estado(error?'No se pudo registrar: '+error.message:data.session?'Cuenta creada y sesión iniciada.':'Revisa tu correo y confirma la cuenta antes de entrar.');
+});
+el('mtp-recuperar').addEventListener('click',async()=>{
+ const email=el('mtp-email').value.trim();if(!email){estado('Introduce tu correo electrónico primero.');return;}
+ const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+ estado(error?'Error al enviar el correo: '+error.message:'Si existe la cuenta, recibirás un correo para recuperar el acceso.');
+});
+el('mtp-salir').addEventListener('click',async()=>{
+ const {error}=await supabase.auth.signOut();
+ if(error)estado('No se pudo cerrar sesión: '+error.message);
+ else {el('mtp-password').value='';estado('Sesión cerrada.');}
+});
+supabase.auth.onAuthStateChange((evento)=>{
+ if(evento==='PASSWORD_RECOVERY'){
+  setTimeout(async()=>{
+   const nueva=prompt('Introduce tu nueva contraseña (12 caracteres como mínimo):');
+   if(nueva===null)return;
+   if(nueva.length<12){estado('La nueva contraseña debe tener al menos 12 caracteres.');return;}
+   const {error}=await supabase.auth.updateUser({password:nueva});
+   estado(error?'No se pudo cambiar la contraseña: '+error.message:'Contraseña actualizada.');
+  },0);
+ }
+});
+</script>
+</body>
+</html>
